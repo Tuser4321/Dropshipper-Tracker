@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropshipper Tracker Pro</title>
+    <title>Dropshipper Tracker Pro (Supabase)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -15,19 +15,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen p-3 md:p-6 transition-colors duration-200">
 
     <div class="max-w-7xl mx-auto space-y-4">
         
-        <!-- Streamlined Top Header Bar with Settings -->
+        <!-- Streamlined Top Header Bar -->
         <div class="flex flex-wrap justify-between items-center gap-3 bg-white dark:bg-slate-800 px-5 py-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="flex items-center gap-3">
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-emerald-500"></i> Dropshipper Tracker
+                    <i class="fa-brands fa-whatsapp text-emerald-500"></i> Dropshipper Tracker Pro
                 </h1>
-                <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-hard-drive"></i> <span data-i18n="autoSave">স্বয়ংক্রিয় সংরক্ষণ সক্রিয়</span>
+                <span id="syncStatus" class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-cloud"></i> <span data-i18n="cloudStatus">Supabase ক্লাউড সক্রিয়</span>
                 </span>
             </div>
 
@@ -111,7 +113,7 @@
                 </div>
                 <div class="flex items-end">
                     <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm">
-                        <i class="fa-solid fa-plus"></i> <span data-i18n="btnAddLead">তথ্য সংরক্ষণ করুন</span>
+                        <i class="fa-solid fa-cloud-arrow-up"></i> <span data-i18n="btnAddLead">ক্লাউডে সেভ করুন</span>
                     </button>
                 </div>
             </form>
@@ -148,6 +150,7 @@
                         </tr>
                     </thead>
                     <tbody id="leadTableBody" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs">
+                        <tr><td colspan="8" class="p-6 text-center text-slate-400 dark:text-slate-500">ক্লাউড ডাটা লোড হচ্ছে...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -234,12 +237,15 @@
         </div>
     </div>
 
-    <!-- Application Script -->
+    <!-- Application Script Connected to Supabase Credentials -->
     <script>
-        // Dictionary Translation Data
+        const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const translations = {
             bn: {
-                autoSave: "স্বয়ংক্রিয় সংরক্ষণ সক্রিয়",
+                cloudStatus: "Supabase ক্লাউড সক্রিয়",
                 tagSettings: "ট্যাগ সেটিংস",
                 exportCSV: "CSV ডাউনলোড",
                 statTotal: "মোট লিড",
@@ -251,7 +257,7 @@
                 lblPage: "পেজ বা ওয়েবসাইট লিংক",
                 lblTag: "প্রোডাক্ট ট্যাগ",
                 lblNote: "ফলো-আপ নোট / মন্তব্য",
-                btnAddLead: "তথ্য সংরক্ষণ করুন",
+                btnAddLead: "ক্লাউডে সেভ করুন",
                 tableHeader: "সকল সংগৃহীত লিড ও ফলো-আপ হিস্ট্রি",
                 filterAllTags: "সকল ট্যাগ",
                 filterAllRoles: "সকল ভূমিকা (D & S)",
@@ -279,7 +285,7 @@
                 noData: "কোনো তথ্য পাওয়া যায়নি"
             },
             en: {
-                autoSave: "Auto-Save Active",
+                cloudStatus: "Supabase Cloud Active",
                 tagSettings: "Tag Settings",
                 exportCSV: "Download CSV",
                 statTotal: "Total Leads",
@@ -291,7 +297,7 @@
                 lblPage: "Page or Website Link",
                 lblTag: "Product Tag",
                 lblNote: "Follow-up Note / Comment",
-                btnAddLead: "Save Lead",
+                btnAddLead: "Save to Cloud",
                 tableHeader: "All Leads & Follow-up History",
                 filterAllTags: "All Tags",
                 filterAllRoles: "All Roles (D & S)",
@@ -322,17 +328,43 @@
 
         let currentLang = localStorage.getItem('rb_tracker_lang') || 'bn';
         let currentTheme = localStorage.getItem('rb_tracker_theme') || 'light';
+        let lastSelectedTagId = localStorage.getItem('rb_last_selected_tag') || '';
 
-        let tags = JSON.parse(localStorage.getItem('rb_fixed_tags')) || [
-            { id: 't1', name: 'Blender' },
-            { id: 't2', name: 'Multi Function Cooker' }
-        ];
-
-        let leads = JSON.parse(localStorage.getItem('rb_fixed_leads')) || [];
-        let lastSelectedTagId = localStorage.getItem('rb_last_selected_tag') || (tags[0] ? tags[0].id : '');
+        let tags = [];
+        let leads = [];
         let chartInstance = null;
 
-        // Theme Toggle Handler
+        async function initData() {
+            await fetchTags();
+            await fetchLeads();
+        }
+
+        async function fetchTags() {
+            const { data, error } = await _supabase.from('tags').select('*');
+            if (!error && data) {
+                tags = data;
+                renderTags();
+            }
+        }
+
+        async function fetchLeads() {
+            const { data, error } = await _supabase.from('leads').select('*').order('id', { ascending: false });
+            if (!error && data) {
+                leads = data.map(l => ({
+                    id: l.id,
+                    role: l.role,
+                    phone: l.phone,
+                    page: l.page,
+                    tagId: l.tag_id,
+                    note: l.note,
+                    status: l.status,
+                    createdAt: l.created_at
+                }));
+                renderLeads();
+                updateChart();
+            }
+        }
+
         function applyTheme() {
             const htmlEl = document.documentElement;
             const themeIcon = document.getElementById('themeIcon');
@@ -356,7 +388,6 @@
             applyTheme();
         }
 
-        // Language Toggle Handler
         function applyLanguage() {
             document.getElementById('langText').innerText = currentLang === 'bn' ? 'English' : 'বাংলা';
             
@@ -375,14 +406,6 @@
         function toggleLanguage() {
             currentLang = currentLang === 'bn' ? 'en' : 'bn';
             applyLanguage();
-        }
-
-        function saveData() {
-            localStorage.setItem('rb_fixed_tags', JSON.stringify(tags));
-            localStorage.setItem('rb_fixed_leads', JSON.stringify(leads));
-            renderTags();
-            renderLeads();
-            updateChart();
         }
 
         function rememberTag(tagId) {
@@ -427,34 +450,36 @@
             return { href, icon, label, fullUrl: url };
         }
 
-        function triggerWhatsApp(leadId, phone, currentStatus) {
+        async function triggerWhatsApp(leadId, phone, currentStatus) {
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
             else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
 
             if (currentStatus === 'blue') {
-                leads = leads.map(l => l.id === leadId ? { ...l, status: 'yellow' } : l);
-                saveData();
+                await changeStatus(leadId, 'yellow');
             }
             window.open(`https://wa.me/${cleaned}`, '_blank');
         }
 
-        function toggleRole(leadId) {
-            leads = leads.map(l => l.id === leadId ? { ...l, role: l.role === 'D' ? 'S' : 'D' } : l);
-            saveData();
+        async function toggleRole(leadId) {
+            const target = leads.find(l => l.id === leadId);
+            if (!target) return;
+            const newRole = target.role === 'D' ? 'S' : 'D';
+            
+            const { error } = await _supabase.from('leads').update({ role: newRole }).eq('id', leadId);
+            if (!error) fetchLeads();
         }
 
-        function changeStatus(leadId, newStatus) {
-            leads = leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l);
-            saveData();
+        async function changeStatus(leadId, newStatus) {
+            const { error } = await _supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
+            if (!error) fetchLeads();
         }
 
-        function updateNote(leadId, newNote) {
-            leads = leads.map(l => l.id === leadId ? { ...l, note: newNote } : l);
-            localStorage.setItem('rb_fixed_leads', JSON.stringify(leads));
+        async function updateNote(leadId, newNote) {
+            await _supabase.from('leads').update({ note: newNote }).eq('id', leadId);
         }
 
-        function addLead(e) {
+        async function addLead(e) {
             e.preventDefault();
             const phone = document.getElementById('phoneInput').value.trim();
             const page = document.getElementById('pageInput').value.trim();
@@ -463,31 +488,35 @@
 
             if (!phone) return;
 
-            leads.unshift({
+            const newLead = {
                 id: Date.now(),
                 role: 'D',
                 phone: phone,
                 page: page,
-                tagId: tagId,
+                tag_id: tagId,
                 note: note || '',
                 status: 'blue',
-                createdAt: new Date().toLocaleDateString('bn-BD')
-            });
+                created_at: new Date().toLocaleDateString('bn-BD')
+            };
 
-            rememberTag(tagId);
-            saveData();
-
-            document.getElementById('phoneInput').value = '';
-            document.getElementById('pageInput').value = '';
-            document.getElementById('noteInput').value = '';
-            document.getElementById('tagSelect').value = lastSelectedTagId;
+            const { error } = await _supabase.from('leads').insert([newLead]);
+            if (!error) {
+                rememberTag(tagId);
+                document.getElementById('phoneInput').value = '';
+                document.getElementById('pageInput').value = '';
+                document.getElementById('noteInput').value = '';
+                document.getElementById('tagSelect').value = lastSelectedTagId;
+                fetchLeads();
+            } else {
+                alert("Error adding lead to Supabase: " + error.message);
+            }
         }
 
-        function deleteLead(id) {
-            const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
+        async function deleteLead(id) {
+            const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি ক্লাউড থেকে মুছে ফেলতে চান?" : "Are you sure you want to delete this lead from cloud?";
             if (confirm(confirmMsg)) {
-                leads = leads.filter(l => l.id !== id);
-                saveData();
+                const { error } = await _supabase.from('leads').delete().eq('id', id);
+                if (!error) fetchLeads();
             }
         }
 
@@ -517,7 +546,7 @@
             modal.classList.remove('flex');
         }
 
-        function saveLeadEdit(e) {
+        async function saveLeadEdit(e) {
             e.preventDefault();
             const id = Number(document.getElementById('editLeadId').value);
             const phone = document.getElementById('editPhoneInput').value.trim();
@@ -527,18 +556,19 @@
             const status = document.getElementById('editStatusSelect').value;
             const note = document.getElementById('editNoteInput').value.trim();
 
-            leads = leads.map(l => l.id === id ? {
-                ...l,
+            const { error } = await _supabase.from('leads').update({
                 phone,
                 page,
-                tagId,
+                tag_id: tagId,
                 role,
                 status,
                 note
-            } : l);
+            }).eq('id', id);
 
-            saveData();
-            closeEditModal();
+            if (!error) {
+                fetchLeads();
+                closeEditModal();
+            }
         }
 
         function toggleTagModal() {
@@ -547,30 +577,34 @@
             modal.classList.toggle('flex');
         }
 
-        function addTag(e) {
+        async function addTag(e) {
             e.preventDefault();
             const name = document.getElementById('newTagName').value.trim();
             if (!name) return;
 
             const newId = 't_' + Date.now();
-            tags.push({ id: newId, name: name });
-            rememberTag(newId);
-            saveData();
-            document.getElementById('newTagName').value = '';
+            const { error } = await _supabase.from('tags').insert([{ id: newId, name: name }]);
+            if (!error) {
+                rememberTag(newId);
+                document.getElementById('newTagName').value = '';
+                fetchTags();
+            }
         }
 
-        function deleteTag(id) {
+        async function deleteTag(id) {
             if (tags.length <= 1) {
                 alert(currentLang === 'bn' ? "কমপক্ষে একটি ট্যাগ সিস্টেমে থাকতে হবে।" : "At least one tag must remain in the system.");
                 return;
             }
-            const confirmMsg = currentLang === 'bn' ? "এই ট্যাগটি ডিলিট করতে চান?" : "Are you sure you want to delete this tag?";
+            const confirmMsg = currentLang === 'bn' ? "এই ট্যাগটি ক্লাউড থেকে ডিলিট করতে চান?" : "Are you sure you want to delete this tag from cloud?";
             if (confirm(confirmMsg)) {
-                tags = tags.filter(t => t.id !== id);
-                if (lastSelectedTagId === id && tags.length > 0) {
-                    rememberTag(tags[0].id);
+                const { error } = await _supabase.from('tags').delete().eq('id', id);
+                if (!error) {
+                    if (lastSelectedTagId === id && tags.length > 0) {
+                        rememberTag(tags[0].id);
+                    }
+                    fetchTags();
                 }
-                saveData();
             }
         }
 
@@ -758,9 +792,7 @@
         // Initial Initialization
         applyTheme();
         applyLanguage();
-        renderTags();
-        renderLeads();
-        updateChart();
+        initData();
     </script>
 </body>
 </html>
