@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropshipper Tracker (Supabase Powered)</title>
+    <title>Dropshipper Tracker</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 md:p-6">
 
@@ -23,8 +21,8 @@
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
                     <i class="fa-brands fa-whatsapp text-emerald-500"></i> Dropshipper Tracker
                 </h1>
-                <span id="syncStatus" class="bg-emerald-100 text-emerald-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-cloud"></i> Supabase ক্লাউড কানেক্টেড
+                <span class="bg-emerald-100 text-emerald-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-hard-drive"></i> অটো-সেভ সক্রিয়
                 </span>
             </div>
             <div class="flex gap-2">
@@ -37,7 +35,7 @@
             </div>
         </div>
 
-        <!-- Compact Analytics Bar -->
+        <!-- Analytics Bar -->
         <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
             <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 text-center">
@@ -81,7 +79,7 @@
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">প্রোডাক্ট ট্যাগ</label>
-                    <select id="tagSelect" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs bg-white outline-none">
+                    <select id="tagSelect" onchange="rememberTag(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs bg-white outline-none">
                     </select>
                 </div>
                 <div>
@@ -91,7 +89,7 @@
                 </div>
                 <div class="flex items-end">
                     <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm">
-                        <i class="fa-solid fa-plus"></i> ক্লাউডে সেভ করুন
+                        <i class="fa-solid fa-plus"></i> তথ্য যুক্ত করুন
                     </button>
                 </div>
             </form>
@@ -122,13 +120,12 @@
                             <th class="p-3">হোয়াটসঅ্যাপ অ্যাকশন</th>
                             <th class="p-3">সোশ্যাল / সাইট লিংক</th>
                             <th class="p-3">প্রোডাক্ট ট্যাগ</th>
-                            <th class="p-3" style="min-width: 200px;">নার্সারিং নোট (Editable)</th>
+                            <th class="p-3" style="min-width: 180px;">নার্সারিং নোট (Editable)</th>
                             <th class="p-3 text-center">স্ট্যাটাস</th>
                             <th class="p-3 text-center">অ্যাকশন</th>
                         </tr>
                     </thead>
                     <tbody id="leadTableBody" class="divide-y divide-slate-100 text-xs">
-                        <tr><td colspan="8" class="p-6 text-center text-slate-400">ডাটা লোড হচ্ছে...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -160,45 +157,82 @@
         </div>
     </div>
 
-    <!-- Script connected with Supabase Credentials -->
-    <script>
-        const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <!-- Edit Lead Modal -->
+    <div id="editLeadModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-5 max-w-md w-full shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i> লিড তথ্য সংশোধন (Edit Lead)
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="saveLeadEdit(event)" class="space-y-3">
+                <input type="hidden" id="editLeadId">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">ফোন নম্বর *</label>
+                    <input type="text" id="editPhoneInput" required class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">পেজ বা ওয়েবসাইট লিংক</label>
+                    <input type="text" id="editPageInput" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">প্রোডাক্ট ট্যাগ</label>
+                        <select id="editTagSelect" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">টাইপ / রোল</label>
+                        <select id="editRoleSelect" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="D">Dropshipper (D)</option>
+                            <option value="S">Supplier (S)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">স্ট্যাটাস</label>
+                    <select id="editStatusSelect" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="blue">নতুন</option>
+                        <option value="yellow">মেসেজড</option>
+                        <option value="green">পজিটিভ ক্লায়েন্ট</option>
+                        <option value="red">নেগেটিভ / বাতিল</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">নার্সারিং নোট</label>
+                    <input type="text" id="editNoteInput" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeEditModal()" class="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-300">বাতিল</button>
+                    <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">পরিবর্তন সেভ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        let tags = [];
-        let leads = [];
+    <script>
+        let tags = JSON.parse(localStorage.getItem('rb_fixed_tags')) || [
+            { id: 't1', name: 'blendar' },
+            { id: 't2', name: 'multi function cooker' }
+        ];
+
+        let leads = JSON.parse(localStorage.getItem('rb_fixed_leads')) || [];
+        let lastSelectedTagId = localStorage.getItem('rb_last_selected_tag') || (tags[0] ? tags[0].id : '');
         let chartInstance = null;
 
-        async function initData() {
-            await fetchTags();
-            await fetchLeads();
+        function saveData() {
+            localStorage.setItem('rb_fixed_tags', JSON.stringify(tags));
+            localStorage.setItem('rb_fixed_leads', JSON.stringify(leads));
+            renderTags();
+            renderLeads();
+            updateChart();
         }
 
-        async function fetchTags() {
-            const { data, error } = await _supabase.from('tags').select('*');
-            if (!error && data) {
-                tags = data;
-                renderTags();
-            }
-        }
-
-        async function fetchLeads() {
-            const { data, error } = await _supabase.from('leads').select('*').order('id', { ascending: false });
-            if (!error && data) {
-                leads = data.map(l => ({
-                    id: l.id,
-                    role: l.role,
-                    phone: l.phone,
-                    page: l.page,
-                    tagId: l.tag_id,
-                    note: l.note,
-                    status: l.status,
-                    createdAt: l.created_at
-                }));
-                renderLeads();
-                updateChart();
-            }
+        function rememberTag(tagId) {
+            lastSelectedTagId = tagId;
+            localStorage.setItem('rb_last_selected_tag', tagId);
         }
 
         function parsePlatformUrl(rawUrl) {
@@ -238,36 +272,34 @@
             return { href, icon, label, fullUrl: url };
         }
 
-        async function triggerWhatsApp(leadId, phone, currentStatus) {
+        function triggerWhatsApp(leadId, phone, currentStatus) {
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
             else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
 
             if (currentStatus === 'blue') {
-                await changeStatus(leadId, 'yellow');
+                leads = leads.map(l => l.id === leadId ? { ...l, status: 'yellow' } : l);
+                saveData();
             }
             window.open(`https://wa.me/${cleaned}`, '_blank');
         }
 
-        async function toggleRole(leadId) {
-            const target = leads.find(l => l.id === leadId);
-            if (!target) return;
-            const newRole = target.role === 'D' ? 'S' : 'D';
-            
-            const { error } = await _supabase.from('leads').update({ role: newRole }).eq('id', leadId);
-            if (!error) fetchLeads();
+        function toggleRole(leadId) {
+            leads = leads.map(l => l.id === leadId ? { ...l, role: l.role === 'D' ? 'S' : 'D' } : l);
+            saveData();
         }
 
-        async function changeStatus(leadId, newStatus) {
-            const { error } = await _supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
-            if (!error) fetchLeads();
+        function changeStatus(leadId, newStatus) {
+            leads = leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l);
+            saveData();
         }
 
-        async function updateNote(leadId, newNote) {
-            await _supabase.from('leads').update({ note: newNote }).eq('id', leadId);
+        function updateNote(leadId, newNote) {
+            leads = leads.map(l => l.id === leadId ? { ...l, note: newNote } : l);
+            localStorage.setItem('rb_fixed_leads', JSON.stringify(leads));
         }
 
-        async function addLead(e) {
+        function addLead(e) {
             e.preventDefault();
             const phone = document.getElementById('phoneInput').value.trim();
             const page = document.getElementById('pageInput').value.trim();
@@ -276,31 +308,84 @@
 
             if (!phone) return;
 
-            const newLead = {
+            leads.unshift({
                 id: Date.now(),
                 role: 'D',
                 phone: phone,
                 page: page,
-                tag_id: tagId,
+                tagId: tagId,
                 note: note || '',
                 status: 'blue',
-                created_at: new Date().toLocaleDateString('bn-BD')
-            };
+                createdAt: new Date().toLocaleDateString('bn-BD')
+            });
 
-            const { error } = await _supabase.from('leads').insert([newLead]);
-            if (!error) {
-                document.getElementById('leadForm').reset();
-                fetchLeads();
-            } else {
-                alert("Error adding lead: " + error.message);
+            rememberTag(tagId);
+            saveData();
+
+            // Clear text inputs but keep last selected tag as default
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('pageInput').value = '';
+            document.getElementById('noteInput').value = '';
+            document.getElementById('tagSelect').value = lastSelectedTagId;
+        }
+
+        function deleteLead(id) {
+            if (confirm("আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?")) {
+                leads = leads.filter(l => l.id !== id);
+                saveData();
             }
         }
 
-        async function deleteLead(id) {
-            if (confirm("আপনি কি নিশ্চিত এই লিডটি ক্লাউড থেকে মুছে ফেলতে চান?")) {
-                const { error } = await _supabase.from('leads').delete().eq('id', id);
-                if (!error) fetchLeads();
-            }
+        // Edit Lead Modal Handlers
+        function openEditModal(leadId) {
+            const lead = leads.find(l => l.id === leadId);
+            if (!lead) return;
+
+            document.getElementById('editLeadId').value = lead.id;
+            document.getElementById('editPhoneInput').value = lead.phone;
+            document.getElementById('editPageInput').value = lead.page || '';
+            document.getElementById('editRoleSelect').value = lead.role || 'D';
+            document.getElementById('editStatusSelect').value = lead.status || 'blue';
+            document.getElementById('editNoteInput').value = lead.note || '';
+
+            // Populate tags dropdown in edit modal
+            const editTagSelect = document.getElementById('editTagSelect');
+            editTagSelect.innerHTML = tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            editTagSelect.value = lead.tagId;
+
+            const modal = document.getElementById('editLeadModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editLeadModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveLeadEdit(e) {
+            e.preventDefault();
+            const id = Number(document.getElementById('editLeadId').value);
+            const phone = document.getElementById('editPhoneInput').value.trim();
+            const page = document.getElementById('editPageInput').value.trim();
+            const tagId = document.getElementById('editTagSelect').value;
+            const role = document.getElementById('editRoleSelect').value;
+            const status = document.getElementById('editStatusSelect').value;
+            const note = document.getElementById('editNoteInput').value.trim();
+
+            leads = leads.map(l => l.id === id ? {
+                ...l,
+                phone,
+                page,
+                tagId,
+                role,
+                status,
+                note
+            } : l);
+
+            saveData();
+            closeEditModal();
         }
 
         function toggleTagModal() {
@@ -309,24 +394,26 @@
             modal.classList.toggle('flex');
         }
 
-        async function addTag(e) {
+        function addTag(e) {
             e.preventDefault();
             const name = document.getElementById('newTagName').value.trim();
             if (!name) return;
 
-            const tagObj = { id: 't_' + Date.now(), name: name };
-            const { error } = await _supabase.from('tags').insert([tagObj]);
-            if (!error) {
-                document.getElementById('newTagName').value = '';
-                fetchTags();
-            }
+            const newId = 't_' + Date.now();
+            tags.push({ id: newId, name: name });
+            rememberTag(newId);
+            saveData();
+            document.getElementById('newTagName').value = '';
         }
 
-        async function deleteTag(id) {
+        function deleteTag(id) {
             if (tags.length <= 1) return alert("কমপক্ষে একটি ট্যাগ সিস্টেমে থাকতে হবে।");
             if (confirm("এই ট্যাগটি ডিলিট করতে চান?")) {
-                const { error } = await _supabase.from('tags').delete().eq('id', id);
-                if (!error) fetchTags();
+                tags = tags.filter(t => t.id !== id);
+                if (lastSelectedTagId === id && tags.length > 0) {
+                    rememberTag(tags[0].id);
+                }
+                saveData();
             }
         }
 
@@ -337,6 +424,14 @@
 
             selectEl.innerHTML = tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
             filterEl.innerHTML = `<option value="ALL">সকল ট্যাগ</option>` + tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+            // Restore last selected tag
+            if (lastSelectedTagId && tags.some(t => t.id === lastSelectedTagId)) {
+                selectEl.value = lastSelectedTagId;
+            } else if (tags.length > 0) {
+                rememberTag(tags[0].id);
+                selectEl.value = tags[0].id;
+            }
 
             listEl.innerHTML = tags.map(t => `
                 <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border text-xs">
@@ -427,9 +522,14 @@
                         </td>
 
                         <td class="p-3 text-center">
-                            <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="openEditModal(${l.id})" class="text-indigo-500 hover:text-indigo-700 transition p-1" title="তথ্য পরিবর্তন করুন">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1" title="ডিলিট করুন">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -455,7 +555,7 @@
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['নতুন', 'মেসেজড', 'পজিティブ', 'নেগেটিভ'],
+                    labels: ['নতুন', 'মেসেজড', 'পজিティブ', 'নেগেティブ'],
                     datasets: [{
                         data: [counts.blue, counts.yellow, counts.green, counts.red],
                         backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#f43f5e'],
@@ -489,8 +589,10 @@
             link.click();
         }
 
-        // Initialize Supabase Data Load
-        initData();
+        // Initial Load
+        renderTags();
+        renderLeads();
+        updateChart();
     </script>
 </body>
 </html>
