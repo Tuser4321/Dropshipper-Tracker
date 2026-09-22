@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropshipper Tracker - Compact Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 md:p-6">
+
+    <div class="max-w-7xl mx-auto space-y-4">
+        
+        <!-- Streamlined Header (No clutter text) -->
+        <div class="flex flex-wrap justify-between items-center gap-2 bg-white px-5 py-3 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-3">
+                <h1 class="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-500"></i> Dropshipper Tracker
+                </h1>
+                <span id="syncStatus" class="bg-emerald-100 text-emerald-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-cloud-check"></i> ক্লাউড সিঙ্ক
+                </span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="toggleTagModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-tags"></i> ট্যাগ সেটিংস
+                </button>
+                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-csv"></i> CSV ডাউনলোড
+                </button>
+            </div>
+        </div>
+
+        <!-- Combined & Ultra-Compact Analytics Bar (Compact Height) -->
+        <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            
+            <!-- Left Side: Compact KPI Stats (7 columns) -->
+            <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 text-center">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">মোট লিড</p>
+                    <h3 id="statTotal" class="text-lg font-bold text-slate-800">0</h3>
+                </div>
+                <div class="bg-blue-50/60 p-2.5 rounded-lg border border-blue-200/60 text-center">
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">নতুন (Blue)</p>
+                    <h3 id="statBlue" class="text-lg font-bold text-blue-600">0</h3>
+                </div>
+                <div class="bg-amber-50/60 p-2.5 rounded-lg border border-amber-200/60 text-center">
+                    <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">মেসেজড (Yellow)</p>
+                    <h3 id="statYellow" class="text-lg font-bold text-amber-600">0</h3>
+                </div>
+                <div class="bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-200/60 text-center">
+                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">পজিটিভ (Green)</p>
+                    <h3 id="statGreen" class="text-lg font-bold text-emerald-600">0</h3>
+                </div>
+            </div>
+
+            <!-- Right Side: Mini Compact Chart (5 columns) -->
+            <div class="md:col-span-5 h-24 relative flex items-center justify-center pt-1">
+                <canvas id="improvementChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Add Lead Form -->
+        <div class="bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-indigo-600"></i> নতুন লিড সেভ করুন
+            </h2>
+            <form id="leadForm" onsubmit="addLead(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">ফোন নম্বর *</label>
+                    <input type="text" id="phoneInput" placeholder="01941606310" required 
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">পেজ বা ওয়েবসাইট লিংক</label>
+                    <input type="text" id="pageInput" placeholder="facebook.com/page-name" 
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">প্রোডাক্ট ট্যাগ</label>
+                    <select id="tagSelect" class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs bg-white outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 uppercase mb-1">নার্সারিং নোট / মন্তব্য</label>
+                    <input type="text" id="noteInput" placeholder="যেমন: ক্যাটালগ পাঠানো হয়েছে" 
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                        <i class="fa-solid fa-plus"></i> তথ্য যুক্ত করুন
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Leads Table Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-3 bg-slate-50/50">
+                <span class="font-semibold text-slate-700 text-xs">সকল ক্লাউড সংগৃহীত লিড ও নার্সারিং হিস্ট্রি</span>
+                <div class="flex gap-2">
+                    <select id="filterTag" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs bg-white outline-none">
+                        <option value="ALL">সকল প্রোডাক্ট ট্যাগ</option>
+                    </select>
+                    <select id="filterRole" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs bg-white outline-none">
+                        <option value="ALL">সকল রোল (D & S)</option>
+                        <option value="D">শুধুমাত্র Dropshipper (D)</option>
+                        <option value="S">শুধুমাত্র Supplier (S)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/70 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            <th class="p-3 text-center">টাইপ</th>
+                            <th class="p-3">ফোন নম্বর</th>
+                            <th class="p-3">হোয়াটসঅ্যাপ অ্যাকশন</th>
+                            <th class="p-3">সোশ্যাল / সাইট লিংক</th>
+                            <th class="p-3">প্রোডাক্ট ট্যাগ</th>
+                            <th class="p-3" style="min-width: 200px;">নার্সারিং নোট (Editable)</th>
+                            <th class="p-3 text-center">স্ট্যাটাস</th>
+                            <th class="p-3 text-center">অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadTableBody" class="divide-y divide-slate-100 text-xs">
+                        <!-- Dynamic Leads -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Product Tag Management Modal -->
+    <div id="tagModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl space-y-3">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">প্রোডাক্ট ট্যাগ সেটিংস</h3>
+                <button onclick="toggleTagModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="addTag(event)" class="space-y-2">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">নতুন ট্যাগের নাম *</label>
+                    <input type="text" id="newTagName" placeholder="যেমন: Mini Fan" required class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">ইমেজ / লোগো URL (ঐচ্ছিক)</label>
+                    <input type="url" id="newTagIcon" placeholder="https://example.com/icon.png" class="w-full px-3 py-1.5 rounded-lg border text-xs outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-1.5 rounded-lg text-xs">নতুন ট্যাগ যোগ করুন</button>
+            </form>
+
+            <div class="border-t pt-2">
+                <p class="text-[11px] font-semibold text-slate-500 mb-1.5">বিদ্যমান ট্যাগসমূহ:</p>
+                <div id="tagList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                    <!-- Dynamic Tag List -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Logic Script -->
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBkP4Q2YgxaZ2GR7RQZkFnyMu-YrdZjWLg",
+          authDomain: "dropshipper-tracker.firebaseapp.com",
+          databaseURL: "https://dropshipper-tracker-default-rtdb.firebaseio.com",
+          projectId: "dropshipper-tracker",
+          storageBucket: "dropshipper-tracker.firebasestorage.app",
+          messagingSenderId: "151194825128",
+          appId: "1:151194825128:web:54d62262e47fcabfd46d9d",
+          measurementId: "G-QYBHBEDVFR"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let leads = [];
+        let tags = [];
+        let chartInstance = null;
+
+        function parsePlatformUrl(rawUrl) {
+            if (!rawUrl || !rawUrl.trim()) return null;
+            let url = rawUrl.trim();
+            let href = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+            let lower = url.toLowerCase();
+
+            let icon = '<i class="fa-solid fa-globe text-indigo-600"></i>';
+            let label = 'Website';
+
+            if (lower.includes('facebook.com') || lower.includes('fb.com')) {
+                icon = '<i class="fa-brands fa-facebook text-blue-600"></i>';
+                label = 'Facebook';
+            } else if (lower.includes('instagram.com')) {
+                icon = '<i class="fa-brands fa-instagram text-pink-500"></i>';
+                label = 'Instagram';
+            } else if (lower.includes('wa.me') || lower.includes('whatsapp.com')) {
+                icon = '<i class="fa-brands fa-whatsapp text-emerald-500"></i>';
+                label = 'WhatsApp';
+            } else if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+                icon = '<i class="fa-brands fa-youtube text-red-600"></i>';
+                label = 'YouTube';
+            } else if (lower.includes('tiktok.com')) {
+                icon = '<i class="fa-brands fa-tiktok text-slate-900"></i>';
+                label = 'TikTok';
+            } else if (lower.includes('daraz.com')) {
+                icon = '<i class="fa-solid fa-bag-shopping text-orange-500"></i>';
+                label = 'Daraz';
+            } else {
+                try {
+                    let domain = new URL(href).hostname.replace('www.', '');
+                    label = domain.length > 12 ? domain.substring(0, 10) + '..' : domain;
+                } catch (e) { label = 'Website'; }
+            }
+
+            return { href, icon, label, fullUrl: url };
+        }
+
+        function setCloudStatus(isOnline) {
+            const el = document.getElementById('syncStatus');
+            if (isOnline) {
+                el.className = "bg-emerald-100 text-emerald-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1";
+                el.innerHTML = `<i class="fa-solid fa-cloud-check"></i> ক্লাউড সিঙ্ক`;
+            } else {
+                el.className = "bg-rose-100 text-rose-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1";
+                el.innerHTML = `<i class="fa-solid fa-cloud-slash"></i> ডিসকানেক্টেড`;
+            }
+        }
+
+        // Realtime Listeners
+        db.collection("tags").onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                db.collection("tags").add({ name: "blendar", icon: "https://cdn-icons-png.flaticon.com/512/3081/3081995.png" });
+                db.collection("tags").add({ name: "multi function cooker", icon: "https://cdn-icons-png.flaticon.com/512/1841/1841982.png" });
+            } else {
+                tags = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
+                renderTags();
+                renderLeads();
+            }
+        });
+
+        db.collection("leads").orderBy("createdAtTimestamp", "desc").onSnapshot(snapshot => {
+            setCloudStatus(true);
+            leads = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
+            renderLeads();
+            updateChart();
+        }, () => setCloudStatus(false));
+
+        function triggerWhatsApp(docId, phone, currentStatus) {
+            let cleaned = phone.replace(/\D/g, '');
+            if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
+            else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
+
+            if (currentStatus === 'blue') {
+                db.collection("leads").doc(docId).update({ status: 'yellow' });
+            }
+            window.open(`https://wa.me/${cleaned}`, '_blank');
+        }
+
+        function toggleRole(docId, currentRole) {
+            db.collection("leads").doc(docId).update({ role: currentRole === 'D' ? 'S' : 'D' });
+        }
+
+        function changeStatus(docId, newStatus) {
+            db.collection("leads").doc(docId).update({ status: newStatus });
+        }
+
+        function updateNote(docId, newNote) {
+            db.collection("leads").doc(docId).update({ note: newNote });
+        }
+
+        function addLead(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phoneInput').value.trim();
+            const page = document.getElementById('pageInput').value.trim();
+            const tagDocId = document.getElementById('tagSelect').value;
+            const note = document.getElementById('noteInput').value.trim();
+
+            if (!phone) return;
+
+            db.collection("leads").add({
+                role: 'D',
+                phone: phone,
+                page: page,
+                tagDocId: tagDocId,
+                note: note || '',
+                status: 'blue',
+                createdAt: new Date().toLocaleDateString('bn-BD'),
+                createdAtTimestamp: Date.now()
+            }).then(() => document.getElementById('leadForm').reset());
+        }
+
+        function deleteLead(docId) {
+            if (confirm("আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?")) {
+                db.collection("leads").doc(docId).delete();
+            }
+        }
+
+        function toggleTagModal() {
+            const modal = document.getElementById('tagModal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function addTag(e) {
+            e.preventDefault();
+            const name = document.getElementById('newTagName').value.trim();
+            const icon = document.getElementById('newTagIcon').value.trim();
+            if (!name) return;
+
+            db.collection("tags").add({ name: name, icon: icon }).then(() => {
+                document.getElementById('newTagName').value = '';
+                document.getElementById('newTagIcon').value = '';
+            });
+        }
+
+        function deleteTag(docId) {
+            if (tags.length <= 1) return alert("কমপক্ষে একটি ট্যাগ থাকতে হবে।");
+            if (confirm("এই ট্যাগটি ডিলিট করবেন?")) {
+                db.collection("tags").doc(docId).delete();
+            }
+        }
+
+        function renderTags() {
+            const selectEl = document.getElementById('tagSelect');
+            const filterEl = document.getElementById('filterTag');
+            const listEl = document.getElementById('tagList');
+
+            selectEl.innerHTML = tags.map(t => `<option value="${t.docId}">${t.name}</option>`).join('');
+            filterEl.innerHTML = `<option value="ALL">সকল ট্যাগ</option>` + tags.map(t => `<option value="${t.docId}">${t.name}</option>`).join('');
+
+            listEl.innerHTML = tags.map(t => `
+                <div class="flex items-center justify-between p-1.5 bg-slate-50 rounded-lg border text-xs">
+                    <div class="flex items-center gap-2">
+                        ${t.icon ? `<img src="${t.icon}" class="w-4 h-4 object-contain rounded">` : `<i class="fa-solid fa-tag text-slate-400"></i>`}
+                        <span class="font-medium text-slate-700">${t.name}</span>
+                    </div>
+                    <button onclick="deleteTag('${t.docId}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function renderLeads() {
+            const tableBody = document.getElementById('leadTableBody');
+            const filterTag = document.getElementById('filterTag').value;
+            const filterRole = document.getElementById('filterRole').value;
+
+            let filtered = leads.filter(l => {
+                const matchTag = filterTag === 'ALL' || l.tagDocId === filterTag;
+                const matchRole = filterRole === 'ALL' || l.role === filterRole;
+                return matchTag && matchRole;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">কোনো তথ্য পাওয়া যায়নি</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(l => {
+                const tagObj = tags.find(t => t.docId === l.tagDocId) || { name: 'General', icon: '' };
+                const platformInfo = parsePlatformUrl(l.page);
+
+                const colorMap = {
+                    blue: { badgeBg: 'bg-blue-50 border-blue-200', text: 'text-blue-600' },
+                    yellow: { badgeBg: 'bg-amber-50 border-amber-200', text: 'text-amber-600' },
+                    green: { badgeBg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-600' },
+                    red: { badgeBg: 'bg-rose-50 border-rose-200', text: 'text-rose-600' }
+                };
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="p-3 text-center">
+                            <button onclick="toggleRole('${l.docId}', '${l.role}')" 
+                                    class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center mx-auto ${
+                                        l.role === 'D' ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-purple-800 text-white border-purple-900'
+                                    }">
+                                ${l.role}
+                            </button>
+                        </td>
+
+                        <td class="p-3 font-semibold text-slate-900">${l.phone}</td>
+
+                        <td class="p-3">
+                            <button onclick="triggerWhatsApp('${l.docId}', '${l.phone}', '${l.status}')" 
+                                    class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm transition">
+                               <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                            </button>
+                        </td>
+
+                        <td class="p-3 text-xs whitespace-nowrap">
+                            ${platformInfo ? 
+                                `<a href="${platformInfo.href}" target="_blank" title="${platformInfo.fullUrl}" 
+                                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+                                    ${platformInfo.icon} <span>${platformInfo.label}</span>
+                                 </a>` : `<span class="text-slate-400">—</span>`
+                            }
+                        </td>
+
+                        <td class="p-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                ${tagObj.icon ? `<img src="${tagObj.icon}" class="w-3.5 h-3.5 object-contain">` : `<i class="fa-solid fa-tag text-slate-400"></i>`}
+                                ${tagObj.name}
+                            </span>
+                        </td>
+
+                        <td class="p-3">
+                            <input type="text" 
+                                   value="${l.note || ''}" 
+                                   placeholder="+ নোট..." 
+                                   onchange="updateNote('${l.docId}', this.value)"
+                                   class="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-indigo-400 rounded-md px-2 py-1 text-xs text-slate-700 outline-none transition">
+                        </td>
+
+                        <td class="p-3 text-center">
+                            <select onchange="changeStatus('${l.docId}', this.value)" 
+                                    class="text-[11px] font-bold px-2 py-1 rounded-lg border outline-none cursor-pointer ${colorMap[l.status].badgeBg} ${colorMap[l.status].text}">
+                                <option value="blue" ${l.status === 'blue' ? 'selected' : ''}>🔵 নীল</option>
+                                <option value="yellow" ${l.status === 'yellow' ? 'selected' : ''}>🟡 হলুদ</option>
+                                <option value="green" ${l.status === 'green' ? 'selected' : ''}>🟢 সবুজ</option>
+                                <option value="red" ${l.status === 'red' ? 'selected' : ''}>🔴 লাল</option>
+                            </select>
+                        </td>
+
+                        <td class="p-3 text-center">
+                            <button onclick="deleteLead('${l.docId}')" class="text-slate-400 hover:text-red-500 transition p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateChart() {
+            const counts = {
+                blue: leads.filter(l => l.status === 'blue').length,
+                yellow: leads.filter(l => l.status === 'yellow').length,
+                green: leads.filter(l => l.status === 'green').length,
+                red: leads.filter(l => l.status === 'red').length
+            };
+
+            document.getElementById('statTotal').innerText = leads.length;
+            document.getElementById('statBlue').innerText = counts.blue;
+            document.getElementById('statYellow').innerText = counts.yellow;
+            document.getElementById('statGreen').innerText = counts.green;
+
+            const ctx = document.getElementById('improvementChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Blue', 'Yellow', 'Green', 'Red'],
+                    datasets: [{
+                        data: [counts.blue, counts.yellow, counts.green, counts.red],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#f43f5e'],
+                        borderRadius: 4,
+                        maxBarThickness: 18
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { ticks: { font: { size: 9 } } },
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } 
+                    }
+                }
+            });
+        }
+
+        function exportToCSV() {
+            if (leads.length === 0) return alert("ডাউনলোড করার মতো তথ্য নেই!");
+            let csv = "data:text/csv;charset=utf-8,Role,Phone,WhatsApp Link,Page Link,Product Tag,Nurturing Note,Status,Date\n";
+            leads.forEach(l => {
+                const tagObj = tags.find(t => t.docId === l.tagDocId) || { name: '' };
+                const waUrl = `https://wa.me/${l.phone}`;
+                csv += `"${l.role === 'D' ? 'Dropshipper' : 'Supplier'}","${l.phone}","${waUrl}","${l.page || ''}","${tagObj.name}","${l.note || ''}","${l.status}","${l.createdAt}"\n`;
+            });
+            const link = document.createElement("a");
+            link.href = encodeURI(csv);
+            link.download = `cloud_leads_${Date.now()}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>
