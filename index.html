@@ -63,11 +63,11 @@
             </div>
         </div>
 
-        <!-- Alert / Warning Container -->
+        <!-- Alert / Duplicate Warning Banner -->
         <div id="duplicateAlert" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between shadow-sm">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>
-                <span id="duplicateAlertMsg">সতর্কতা: এই ফোন নম্বর বা পেজ লিংকটি ইতিমধ্যেই সিস্টেমে বিদ্যমান!</span>
+                <span id="duplicateAlertMsg">সতর্কতা: এই তথ্যটি ইতিমধ্যেই সিস্টেমে রয়েছে!</span>
             </div>
             <button onclick="closeAlert()" class="text-amber-500 hover:text-amber-700 font-bold ml-2"><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -174,7 +174,7 @@
 
     </div>
 
-    <!-- Product Tag Management Modal -->
+    <!-- Product Tag Settings Modal -->
     <div id="tagModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-xl p-5 max-w-sm w-full shadow-xl space-y-3 border dark:border-slate-700">
             <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
@@ -253,33 +253,35 @@
         </div>
     </div>
 
+    <!-- Application Script -->
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
         const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Multi-Color Palette Assignment Engine
-        const TAG_PALETTES = [
-            { bg: 'bg-indigo-100 dark:bg-indigo-950/60', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-300 dark:border-indigo-800', dot: '#6366f1' },
-            { bg: 'bg-emerald-100 dark:bg-emerald-950/60', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-800', dot: '#10b981' },
-            { bg: 'bg-amber-100 dark:bg-amber-950/60', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-800', dot: '#f59e0b' },
-            { bg: 'bg-purple-100 dark:bg-purple-950/60', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-300 dark:border-purple-800', dot: '#a855f7' },
-            { bg: 'bg-rose-100 dark:bg-rose-950/60', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-300 dark:border-rose-800', dot: '#f43f5e' },
-            { bg: 'bg-cyan-100 dark:bg-cyan-950/60', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-300 dark:border-cyan-800', dot: '#06b6d4' },
-            { bg: 'bg-orange-100 dark:bg-orange-950/60', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-800', dot: '#f97316' }
+        // Distinct Colors Palette for Dynamic Tag Icons
+        const TAG_COLORS = [
+            'text-purple-500',
+            'text-emerald-500',
+            'text-blue-500',
+            'text-amber-500',
+            'text-rose-500',
+            'text-indigo-500',
+            'text-cyan-500',
+            'text-orange-500',
+            'text-teal-500'
         ];
 
-        function getTagPalette(tagId, tagName) {
+        function getTagColor(tagId) {
             let hash = 0;
-            const str = (tagId || '') + (tagName || '');
+            const str = tagId || '';
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
             }
-            const index = Math.abs(hash) % TAG_PALETTES.length;
-            return TAG_PALETTES[index];
+            return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
         }
 
-        // Helper: Convert Bangla Digits to English Digits
+        // Convert Bangla Numerals to English Numerals
         function convertBnToEnNum(inputStr) {
             if (!inputStr) return '';
             const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -417,7 +419,7 @@
             }
         }
 
-        // Check Duplicates in Input
+        // Check for Duplicate Phone Number or Page Link
         function checkDuplicateWarning() {
             const phoneVal = convertBnToEnNum(document.getElementById('phoneInput').value.trim());
             const pageVal = document.getElementById('pageInput').value.trim().toLowerCase();
@@ -636,10 +638,7 @@
             document.getElementById('editNoteInput').value = lead.note || '';
 
             const editTagSelect = document.getElementById('editTagSelect');
-            editTagSelect.innerHTML = tags.map(t => {
-                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
-                return `<option value="${t.id}">🏷️ [${initial}] ${t.name}</option>`;
-            }).join('');
+            editTagSelect.innerHTML = tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
             editTagSelect.value = lead.tagId;
 
             const modal = document.getElementById('editLeadModal');
@@ -720,12 +719,9 @@
             const filterEl = document.getElementById('filterTag');
             const listEl = document.getElementById('tagList');
 
-            selectEl.innerHTML = tags.map(t => {
-                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
-                return `<option value="${t.id}">🏷️ [${initial}] ${t.name}</option>`;
-            }).join('');
-
-            filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            // Render tags with both symbol and name
+            selectEl.innerHTML = tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
+            filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
 
             if (lastSelectedTagId && tags.some(t => t.id === lastSelectedTagId)) {
                 selectEl.value = lastSelectedTagId;
@@ -734,16 +730,13 @@
                 selectEl.value = tags[0].id;
             }
 
+            // Render existing tags list in modal with distinct colorful tag icons
             listEl.innerHTML = tags.map(t => {
-                const palette = getTagPalette(t.id, t.name);
-                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
+                const colorClass = getTagColor(t.id);
                 return `
                     <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border dark:border-slate-600 text-xs">
-                        <span class="font-medium flex items-center gap-2 text-slate-700 dark:text-slate-200">
-                            <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${palette.bg} ${palette.text} border ${palette.border}">
-                                ${initial}
-                            </span>
-                            ${t.name}
+                        <span class="font-medium text-slate-700 dark:text-slate-200">
+                            <i class="fa-solid fa-tag ${colorClass} mr-1.5"></i>${t.name}
                         </span>
                         <button onclick="deleteTag('${t.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
@@ -769,9 +762,7 @@
 
             tableBody.innerHTML = filtered.map(l => {
                 const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
-                const palette = getTagPalette(tagObj.id, tagObj.name);
-                const initial = tagObj.name ? tagObj.name.charAt(0).toUpperCase() : 'G';
-
+                const colorClass = getTagColor(tagObj.id);
                 const platformInfo = parsePlatformUrl(l.page);
 
                 const colorMap = {
@@ -811,11 +802,8 @@
                         </td>
 
                         <td class="p-3">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold ${palette.bg} ${palette.text} border ${palette.border}">
-                                <span class="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold bg-white/70 dark:bg-black/20">
-                                    ${initial}
-                                </span>
-                                <span>${tagObj.name}</span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
+                                <i class="fa-solid fa-tag ${colorClass}"></i> ${tagObj.name}
                             </span>
                         </td>
 
