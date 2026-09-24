@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropshipper Tracker Pro (Supabase)</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Dropshipper Tracker Pro</title>
+    <!-- Browser Tab & Mobile Shortcut Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <meta name="theme-color" content="#4F46E5">
+    <!-- Favicon & Touch Icon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
+    <meta name="theme-color" content="#4F46E5">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -28,8 +32,9 @@
         <!-- Streamlined Top Header Bar -->
         <div class="flex flex-wrap justify-between items-center gap-3 bg-white dark:bg-slate-800 px-5 py-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <div class="flex items-center gap-3">
+                <img src="favicon.svg" alt="Logo" class="w-7 h-7 rounded-lg shadow-sm">
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-emerald-500"></i> Dropshipper Tracker Pro
+                    Dropshipper Tracker Pro
                 </h1>
                 <span id="syncStatus" class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                     <i class="fa-solid fa-cloud"></i> <span data-i18n="cloudStatus">Supabase ক্লাউড সক্রিয়</span>
@@ -38,28 +43,33 @@
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
-                <!-- Theme Toggle Button -->
                 <button onclick="toggleTheme()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                     <span id="themeText">Dark Mode</span>
                 </button>
 
-                <!-- Language Selector Button -->
                 <button onclick="toggleLanguage()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600">
                     <i class="fa-solid fa-language text-indigo-500"></i>
                     <span id="langText">English</span>
                 </button>
 
-                <!-- Tag Settings Button -->
                 <button onclick="toggleTagModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
                     <i class="fa-solid fa-tags"></i> <span data-i18n="tagSettings">ট্যাগ সেটিংস</span>
                 </button>
 
-                <!-- CSV Export Button -->
                 <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
                     <i class="fa-solid fa-file-csv"></i> <span data-i18n="exportCSV">CSV ডাউনলোড</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Alert / Warning Container -->
+        <div id="duplicateAlert" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-xs flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>
+                <span id="duplicateAlertMsg">সতর্কতা: এই ফোন নম্বর বা পেজ লিংকটি ইতিমধ্যেই সিস্টেমে বিদ্যমান!</span>
+            </div>
+            <button onclick="closeAlert()" class="text-amber-500 hover:text-amber-700 font-bold ml-2"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <!-- Analytics Overview Bar -->
@@ -96,19 +106,16 @@
             <form id="leadForm" onsubmit="addLead(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblPhone">ফোন নম্বর *</label>
-                    <input type="text" id="phoneInput" placeholder="01941606310" required oninput="handlePhoneInput(this)"
+                    <input type="text" id="phoneInput" placeholder="01941606310" required 
+                           oninput="autoConvertPhone(this)"
+                           onblur="checkDuplicateWarning()"
                            class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
-                    <span id="phoneDupWarn" class="text-[10px] font-bold text-rose-500 hidden mt-1 flex items-center gap-1">
-                        <i class="fa-solid fa-triangle-exclamation"></i> ডুপ্লিকেট ফোন নম্বর!
-                    </span>
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblPage">পেজ বা ওয়েবসাইট লিংক</label>
-                    <input type="text" id="pageInput" placeholder="facebook.com/page-name" oninput="handlePageInput(this)"
+                    <input type="text" id="pageInput" placeholder="facebook.com/page-name" 
+                           onblur="checkDuplicateWarning()"
                            class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
-                    <span id="pageDupWarn" class="text-[10px] font-bold text-amber-500 hidden mt-1 flex items-center gap-1">
-                        <i class="fa-solid fa-triangle-exclamation"></i> ডুপ্লিকেট পেজ লিংক!
-                    </span>
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblTag">প্রোডাক্ট ট্যাগ</label>
@@ -152,7 +159,7 @@
                             <th class="p-3" data-i18n="thPhone">ফোন নম্বর</th>
                             <th class="p-3" data-i18n="thWhatsApp">হোয়াটসঅ্যাপ অ্যাকশন</th>
                             <th class="p-3" data-i18n="thPlatform">সোশ্যাল / সাইট লিংক</th>
-                            <th class="p-3" data-i18n="thTag">প্রোডাক্ট ট্যাগ (PNG সহ)</th>
+                            <th class="p-3" data-i18n="thTag">প্রোডাক্ট ট্যাগ</th>
                             <th class="p-3" style="min-width: 180px;" data-i18n="thNote">ফলো-আপ নোট</th>
                             <th class="p-3 text-center" data-i18n="thStatus">স্ট্যাটাস</th>
                             <th class="p-3 text-center" data-i18n="thAction">কার্যক্রম</th>
@@ -167,7 +174,7 @@
 
     </div>
 
-    <!-- Product Tag Management Modal with PNG Image/Logo Support -->
+    <!-- Product Tag Management Modal -->
     <div id="tagModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-slate-800 rounded-xl p-5 max-w-sm w-full shadow-xl space-y-3 border dark:border-slate-700">
             <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
@@ -178,12 +185,7 @@
             <form onsubmit="addTag(event)" class="space-y-3">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblNewTag">নতুন ট্যাগের নাম *</label>
-                    <input type="text" id="newTagName" placeholder="যেমন: Smart Watch" required class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-purple-500">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">PNG লোগো / আইকন লিংক (URL)</label>
-                    <input type="url" id="newTagIcon" placeholder="https://cdn-icons-png.flaticon.com/...png" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-purple-500">
-                    <p class="text-[10px] text-slate-400 mt-1">ফাঁকা রাখলে ডিফল্ট সুন্দর ট্যাগের আইকন দেখাবে।</p>
+                    <input type="text" id="newTagName" placeholder="যেমন: Mini Fan" required class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-purple-500">
                 </div>
                 <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-1.5 rounded-lg text-xs" data-i18n="btnAddNewTag">নতুন ট্যাগ যোগ করুন</button>
             </form>
@@ -210,7 +212,7 @@
                 <input type="hidden" id="editLeadId">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblPhone">ফোন নম্বর *</label>
-                    <input type="text" id="editPhoneInput" required oninput="handlePhoneInput(this)" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="editPhoneInput" required oninput="autoConvertPhone(this)" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblPage">পেজ বা ওয়েবসাইট লিংক</label>
@@ -251,11 +253,47 @@
         </div>
     </div>
 
-    <!-- Application Script Connected to Supabase Credentials -->
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
         const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Multi-Color Palette Assignment Engine
+        const TAG_PALETTES = [
+            { bg: 'bg-indigo-100 dark:bg-indigo-950/60', text: 'text-indigo-700 dark:text-indigo-300', border: 'border-indigo-300 dark:border-indigo-800', dot: '#6366f1' },
+            { bg: 'bg-emerald-100 dark:bg-emerald-950/60', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-800', dot: '#10b981' },
+            { bg: 'bg-amber-100 dark:bg-amber-950/60', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-800', dot: '#f59e0b' },
+            { bg: 'bg-purple-100 dark:bg-purple-950/60', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-300 dark:border-purple-800', dot: '#a855f7' },
+            { bg: 'bg-rose-100 dark:bg-rose-950/60', text: 'text-rose-700 dark:text-rose-300', border: 'border-rose-300 dark:border-rose-800', dot: '#f43f5e' },
+            { bg: 'bg-cyan-100 dark:bg-cyan-950/60', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-300 dark:border-cyan-800', dot: '#06b6d4' },
+            { bg: 'bg-orange-100 dark:bg-orange-950/60', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300 dark:border-orange-800', dot: '#f97316' }
+        ];
+
+        function getTagPalette(tagId, tagName) {
+            let hash = 0;
+            const str = (tagId || '') + (tagName || '');
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % TAG_PALETTES.length;
+            return TAG_PALETTES[index];
+        }
+
+        // Helper: Convert Bangla Digits to English Digits
+        function convertBnToEnNum(inputStr) {
+            if (!inputStr) return '';
+            const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            const enDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let res = inputStr;
+            for (let i = 0; i < 10; i++) {
+                res = res.replace(new RegExp(bnDigits[i], 'g'), enDigits[i]);
+            }
+            return res;
+        }
+
+        function autoConvertPhone(el) {
+            el.value = convertBnToEnNum(el.value);
+        }
 
         const translations = {
             bn: {
@@ -279,7 +317,7 @@
                 thPhone: "ফোন নম্বর",
                 thWhatsApp: "হোয়াটসঅ্যাপ অ্যাকশন",
                 thPlatform: "সোশ্যাল / সাইট লিংক",
-                thTag: "প্রোডাক্ট ট্যাগ (PNG সহ)",
+                thTag: "প্রোডাক্ট ট্যাগ",
                 thNote: "ফলো-আপ নোট",
                 thStatus: "স্ট্যাটাস",
                 thAction: "কার্যক্রম",
@@ -319,7 +357,7 @@
                 thPhone: "Phone Number",
                 thWhatsApp: "WhatsApp Action",
                 thPlatform: "Social / Site Link",
-                thTag: "Product Tag (with PNG)",
+                thTag: "Product Tag",
                 thNote: "Follow-up Note",
                 thStatus: "Status",
                 thAction: "Actions",
@@ -348,46 +386,6 @@
         let leads = [];
         let chartInstance = null;
 
-        // Utility: Convert Bangla Digits to English Digits
-        function convertBanglaToEnglish(str) {
-            if (!str) return '';
-            const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-            return str.replace(/[০-৯]/g, d => bnDigits.indexOf(d));
-        }
-
-        // Handle Phone Input Formatting & Duplicate Check
-        function handlePhoneInput(inputEl) {
-            let val = convertBanglaToEnglish(inputEl.value);
-            val = val.replace(/[^\d+]/g, ''); // keep numbers & plus
-            inputEl.value = val;
-
-            const dupWarn = document.getElementById('phoneDupWarn');
-            if (!dupWarn) return;
-
-            const isDuplicate = leads.some(l => l.phone && l.phone.trim() === val.trim() && val.trim().length > 5);
-            if (isDuplicate) {
-                dupWarn.classList.remove('hidden');
-            } else {
-                dupWarn.classList.add('hidden');
-            }
-        }
-
-        function handlePageInput(inputEl) {
-            const val = inputEl.value.trim().toLowerCase();
-            const dupWarn = document.getElementById('pageDupWarn');
-            if (!dupWarn || !val) {
-                if (dupWarn) dupWarn.classList.add('hidden');
-                return;
-            }
-
-            const isDuplicate = leads.some(l => l.page && l.page.trim().toLowerCase() === val && val.length > 5);
-            if (isDuplicate) {
-                dupWarn.classList.remove('hidden');
-            } else {
-                dupWarn.classList.add('hidden');
-            }
-        }
-
         async function initData() {
             await fetchTags();
             await fetchLeads();
@@ -396,11 +394,7 @@
         async function fetchTags() {
             const { data, error } = await _supabase.from('tags').select('*');
             if (!error && data) {
-                tags = data.map(t => ({
-                    id: t.id,
-                    name: t.name,
-                    iconUrl: t.icon_url || ''
-                }));
+                tags = data;
                 renderTags();
             }
         }
@@ -421,6 +415,48 @@
                 renderLeads();
                 updateChart();
             }
+        }
+
+        // Check Duplicates in Input
+        function checkDuplicateWarning() {
+            const phoneVal = convertBnToEnNum(document.getElementById('phoneInput').value.trim());
+            const pageVal = document.getElementById('pageInput').value.trim().toLowerCase();
+            const alertEl = document.getElementById('duplicateAlert');
+            const alertMsg = document.getElementById('duplicateAlertMsg');
+
+            if (!phoneVal && !pageVal) {
+                alertEl.classList.add('hidden');
+                return false;
+            }
+
+            let foundPhone = false;
+            let foundPage = false;
+
+            if (phoneVal) {
+                const cleanInput = phoneVal.replace(/\D/g, '');
+                foundPhone = leads.some(l => l.phone.replace(/\D/g, '') === cleanInput);
+            }
+
+            if (pageVal) {
+                foundPage = leads.some(l => l.page && l.page.toLowerCase().includes(pageVal));
+            }
+
+            if (foundPhone || foundPage) {
+                let msg = currentLang === 'bn' 
+                    ? "সতর্কতা: " + (foundPhone ? "এই ফোন নম্বরটি " : "") + (foundPhone && foundPage ? "এবং " : "") + (foundPage ? "এই পেজ লিংকটি " : "") + "ইতিমধ্যেই সিস্টেমে রয়েছে!"
+                    : "Warning: " + (foundPhone ? "This phone number " : "") + (foundPhone && foundPage ? "and " : "") + (foundPage ? "this page link " : "") + "already exists in system!";
+                
+                alertMsg.innerText = msg;
+                alertEl.classList.remove('hidden');
+                return true;
+            } else {
+                alertEl.classList.add('hidden');
+                return false;
+            }
+        }
+
+        function closeAlert() {
+            document.getElementById('duplicateAlert').classList.add('hidden');
         }
 
         function applyTheme() {
@@ -540,18 +576,19 @@
         async function addLead(e) {
             e.preventDefault();
             const rawPhone = document.getElementById('phoneInput').value.trim();
-            const phone = convertBanglaToEnglish(rawPhone);
+            const phone = convertBnToEnNum(rawPhone);
             const page = document.getElementById('pageInput').value.trim();
             const tagId = document.getElementById('tagSelect').value;
             const note = document.getElementById('noteInput').value.trim();
 
             if (!phone) return;
 
-            // Check Duplicate Prompt
-            const isDup = leads.some(l => l.phone && l.phone.trim() === phone);
+            const isDup = checkDuplicateWarning();
             if (isDup) {
-                const proceed = confirm(currentLang === 'bn' ? "এই ফোন নম্বরটি ইতিমধ্যে তালিকায় সংরক্ষিত রয়েছে। তবুও কি নতুন করে যোগ করতে চান?" : "This phone number already exists. Do you still want to add it?");
-                if (!proceed) return;
+                const confirmAdd = confirm(currentLang === 'bn' 
+                    ? "এই তথ্যটি ডুপ্লিকেট বলে মনে হচ্ছে। আপনি কি তবুও নতুন লিড হিসেবে সেভ করতে চান?" 
+                    : "This entry seems duplicate. Do you still want to save it?");
+                if (!confirmAdd) return;
             }
 
             const newLead = {
@@ -571,17 +608,16 @@
                 document.getElementById('phoneInput').value = '';
                 document.getElementById('pageInput').value = '';
                 document.getElementById('noteInput').value = '';
-                document.getElementById('phoneDupWarn').classList.add('hidden');
-                document.getElementById('pageDupWarn').classList.add('hidden');
                 document.getElementById('tagSelect').value = lastSelectedTagId;
+                closeAlert();
                 fetchLeads();
             } else {
-                alert("Error adding lead to Supabase: " + error.message);
+                alert("Error adding lead: " + error.message);
             }
         }
 
         async function deleteLead(id) {
-            const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি ক্লাউড থেকে মুছে ফেলতে চান?" : "Are you sure you want to delete this lead from cloud?";
+            const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
             if (confirm(confirmMsg)) {
                 const { error } = await _supabase.from('leads').delete().eq('id', id);
                 if (!error) fetchLeads();
@@ -600,7 +636,10 @@
             document.getElementById('editNoteInput').value = lead.note || '';
 
             const editTagSelect = document.getElementById('editTagSelect');
-            editTagSelect.innerHTML = tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            editTagSelect.innerHTML = tags.map(t => {
+                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
+                return `<option value="${t.id}">🏷️ [${initial}] ${t.name}</option>`;
+            }).join('');
             editTagSelect.value = lead.tagId;
 
             const modal = document.getElementById('editLeadModal');
@@ -617,8 +656,7 @@
         async function saveLeadEdit(e) {
             e.preventDefault();
             const id = Number(document.getElementById('editLeadId').value);
-            const rawPhone = document.getElementById('editPhoneInput').value.trim();
-            const phone = convertBanglaToEnglish(rawPhone);
+            const phone = convertBnToEnNum(document.getElementById('editPhoneInput').value.trim());
             const page = document.getElementById('editPageInput').value.trim();
             const tagId = document.getElementById('editTagSelect').value;
             const role = document.getElementById('editRoleSelect').value;
@@ -649,25 +687,14 @@
         async function addTag(e) {
             e.preventDefault();
             const name = document.getElementById('newTagName').value.trim();
-            const iconUrl = document.getElementById('newTagIcon').value.trim();
             if (!name) return;
 
             const newId = 't_' + Date.now();
-            const { error } = await _supabase.from('tags').insert([{ id: newId, name: name, icon_url: iconUrl }]);
+            const { error } = await _supabase.from('tags').insert([{ id: newId, name: name }]);
             if (!error) {
                 rememberTag(newId);
                 document.getElementById('newTagName').value = '';
-                document.getElementById('newTagIcon').value = '';
                 fetchTags();
-            } else {
-                // Fallback if icon_url column does not exist yet
-                const fallbackRes = await _supabase.from('tags').insert([{ id: newId, name: name }]);
-                if (!fallbackRes.error) {
-                    rememberTag(newId);
-                    document.getElementById('newTagName').value = '';
-                    document.getElementById('newTagIcon').value = '';
-                    fetchTags();
-                }
             }
         }
 
@@ -693,7 +720,11 @@
             const filterEl = document.getElementById('filterTag');
             const listEl = document.getElementById('tagList');
 
-            selectEl.innerHTML = tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            selectEl.innerHTML = tags.map(t => {
+                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
+                return `<option value="${t.id}">🏷️ [${initial}] ${t.name}</option>`;
+            }).join('');
+
             filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 
             if (lastSelectedTagId && tags.some(t => t.id === lastSelectedTagId)) {
@@ -704,10 +735,16 @@
             }
 
             listEl.innerHTML = tags.map(t => {
-                const iconHtml = t.iconUrl ? `<img src="${t.iconUrl}" class="w-4 h-4 object-contain rounded mr-1.5 inline">` : `<i class="fa-solid fa-tag text-purple-500 mr-1.5"></i>`;
+                const palette = getTagPalette(t.id, t.name);
+                const initial = t.name ? t.name.charAt(0).toUpperCase() : 'T';
                 return `
                     <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border dark:border-slate-600 text-xs">
-                        <span class="font-medium text-slate-700 dark:text-slate-200 flex items-center">${iconHtml} ${t.name}</span>
+                        <span class="font-medium flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                            <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold ${palette.bg} ${palette.text} border ${palette.border}">
+                                ${initial}
+                            </span>
+                            ${t.name}
+                        </span>
                         <button onclick="deleteTag('${t.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
@@ -731,7 +768,10 @@
             }
 
             tableBody.innerHTML = filtered.map(l => {
-                const tagObj = tags.find(t => t.id === l.tagId) || { name: 'General', iconUrl: '' };
+                const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
+                const palette = getTagPalette(tagObj.id, tagObj.name);
+                const initial = tagObj.name ? tagObj.name.charAt(0).toUpperCase() : 'G';
+
                 const platformInfo = parsePlatformUrl(l.page);
 
                 const colorMap = {
@@ -740,10 +780,6 @@
                     green: { badgeBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800', text: 'text-emerald-600 dark:text-emerald-400' },
                     red: { badgeBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800', text: 'text-rose-600 dark:text-rose-400' }
                 };
-
-                const tagIconHtml = tagObj.iconUrl 
-                    ? `<img src="${tagObj.iconUrl}" class="w-4 h-4 object-contain rounded">`
-                    : `<i class="fa-solid fa-tag text-purple-500"></i>`;
 
                 return `
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition">
@@ -775,8 +811,11 @@
                         </td>
 
                         <td class="p-3">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
-                                ${tagIconHtml} <span>${tagObj.name}</span>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold ${palette.bg} ${palette.text} border ${palette.border}">
+                                <span class="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold bg-white/70 dark:bg-black/20">
+                                    ${initial}
+                                </span>
+                                <span>${tagObj.name}</span>
                             </span>
                         </td>
 
