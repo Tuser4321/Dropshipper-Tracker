@@ -157,11 +157,11 @@
                         <tr class="bg-slate-100/70 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             <th class="p-3 text-center" data-i18n="thRole">ভূমিকা</th>
                             <th class="p-3" data-i18n="thPhone">ফোন নম্বর</th>
+                            <th class="p-3 text-center" data-i18n="thStatus">স্ট্যাটাস</th>
                             <th class="p-3" data-i18n="thWhatsApp">হোয়াটসঅ্যাপ অ্যাকশন</th>
                             <th class="p-3" data-i18n="thPlatform">সোশ্যাল / সাইট লিংক</th>
                             <th class="p-3" data-i18n="thTag">প্রোডাক্ট ট্যাগ</th>
                             <th class="p-3" style="min-width: 180px;" data-i18n="thNote">ফলো-আপ নোট</th>
-                            <th class="p-3 text-center" data-i18n="thStatus">স্ট্যাটাস</th>
                             <th class="p-3 text-center" data-i18n="thAction">কার্যক্রম</th>
                         </tr>
                     </thead>
@@ -235,10 +235,10 @@
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblStatus">স্ট্যাটাস</label>
                     <select id="editStatusSelect" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="blue" data-i18n="stNew">নতুন</option>
-                        <option value="yellow" data-i18n="stContacted">যোগাযোগকৃত</option>
-                        <option value="green" data-i18n="stConverted">সফল লিড</option>
-                        <option value="red" data-i18n="stCancelled">অনগ্রহী / বাতিল</option>
+                        <option value="blue">⚡ নতুন (New)</option>
+                        <option value="yellow">💬 যোগাযোগকৃত (Contacted)</option>
+                        <option value="green">✅ সফল লিড (Converted)</option>
+                        <option value="red">❌ আগ্রহহীন / বাতিল (Cancelled)</option>
                     </select>
                 </div>
                 <div>
@@ -257,7 +257,49 @@
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
         const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let _supabase = null;
+        try {
+            _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch (e) {
+            console.warn("Supabase init error:", e);
+        }
+
+        // Status Smart Symbols & Action-Aligned Color Coding
+        const STATUS_CONFIG = {
+            blue: {
+                symbol: '<i class="fa-solid fa-bolt"></i>',
+                labelBn: 'নতুন লিড',
+                labelEn: 'New Lead',
+                btnClass: 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-700'
+            },
+            yellow: {
+                symbol: '<i class="fa-solid fa-comments"></i>',
+                labelBn: 'যোগাযোগকৃত',
+                labelEn: 'Contacted',
+                btnClass: 'bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700'
+            },
+            green: {
+                symbol: '<i class="fa-solid fa-circle-check"></i>',
+                labelBn: 'সফল লিড (কনভার্টেড)',
+                labelEn: 'Converted',
+                btnClass: 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700'
+            },
+            red: {
+                symbol: '<i class="fa-solid fa-circle-xmark"></i>',
+                labelBn: 'অনগ্রহী / বাতিল',
+                labelEn: 'Cancelled',
+                btnClass: 'bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-700'
+            }
+        };
+
+        // Storage Keys for Dual-Persistence (Local Fallback + Cloud Sync)
+        const STORAGE_KEYS = {
+            leads: 'dropshipper_tracker_leads_v2',
+            tags: 'dropshipper_tracker_tags_v2',
+            lang: 'rb_tracker_lang',
+            theme: 'rb_tracker_theme',
+            lastTag: 'rb_last_selected_tag'
+        };
 
         // Distinct Colors Palette for Dynamic Tag Icons
         const TAG_COLORS = [
@@ -300,6 +342,8 @@
         const translations = {
             bn: {
                 cloudStatus: "Supabase ক্লাউড সক্রিয়",
+                cloudStatusOnline: "Supabase ক্লাউড সক্রিয়",
+                cloudStatusOffline: "অফলাইন মোড (লোকাল সেভ)",
                 tagSettings: "ট্যাগ সেটিংস",
                 exportCSV: "CSV ডাউনলোড",
                 statTotal: "মোট লিড",
@@ -311,17 +355,17 @@
                 lblPage: "পেজ বা ওয়েবসাইট লিংক",
                 lblTag: "প্রোডাক্ট ট্যাগ",
                 lblNote: "ফলো-আপ নোট / মন্তব্য",
-                btnAddLead: "ক্লাউডে সেভ করুন",
+                btnAddLead: "সেভ করুন",
                 tableHeader: "সকল সংগৃহীত লিড ও ফলো-আপ হিস্ট্রি",
                 filterAllTags: "সকল ট্যাগ",
                 filterAllRoles: "সকল ভূমিকা (D & S)",
                 thRole: "ভূমিকা",
                 thPhone: "ফোন নম্বর",
+                thStatus: "স্ট্যাটাস",
                 thWhatsApp: "হোয়াটসঅ্যাপ অ্যাকশন",
                 thPlatform: "সোশ্যাল / সাইট লিংক",
                 thTag: "প্রোডাক্ট ট্যাগ",
                 thNote: "ফলো-আপ নোট",
-                thStatus: "স্ট্যাটাস",
                 thAction: "কার্যক্রম",
                 modalTagTitle: "প্রোডাক্ট ট্যাগ সেটিংস",
                 lblNewTag: "নতুন ট্যাগের নাম *",
@@ -336,10 +380,13 @@
                 stCancelled: "অনগ্রহী / বাতিল",
                 btnCancel: "বাতিল",
                 btnSaveEdit: "পরিবর্তন সেভ করুন",
-                noData: "কোনো তথ্য পাওয়া যায়নি"
+                noData: "কোনো তথ্য পাওয়া যায়নি",
+                clickToChange: "ক্লিক করে পরিবর্তন করুন"
             },
             en: {
                 cloudStatus: "Supabase Cloud Active",
+                cloudStatusOnline: "Supabase Cloud Active",
+                cloudStatusOffline: "Offline Mode (Local Save)",
                 tagSettings: "Tag Settings",
                 exportCSV: "Download CSV",
                 statTotal: "Total Leads",
@@ -351,17 +398,17 @@
                 lblPage: "Page or Website Link",
                 lblTag: "Product Tag",
                 lblNote: "Follow-up Note / Comment",
-                btnAddLead: "Save to Cloud",
+                btnAddLead: "Save Lead",
                 tableHeader: "All Leads & Follow-up History",
                 filterAllTags: "All Tags",
                 filterAllRoles: "All Roles (D & S)",
                 thRole: "Role",
                 thPhone: "Phone Number",
+                thStatus: "Status",
                 thWhatsApp: "WhatsApp Action",
                 thPlatform: "Social / Site Link",
                 thTag: "Product Tag",
                 thNote: "Follow-up Note",
-                thStatus: "Status",
                 thAction: "Actions",
                 modalTagTitle: "Product Tag Settings",
                 lblNewTag: "New Tag Name *",
@@ -376,46 +423,134 @@
                 stCancelled: "Uninterested / Cancelled",
                 btnCancel: "Cancel",
                 btnSaveEdit: "Save Changes",
-                noData: "No data available"
+                noData: "No data available",
+                clickToChange: "Click to change"
             }
         };
 
-        let currentLang = localStorage.getItem('rb_tracker_lang') || 'bn';
-        let currentTheme = localStorage.getItem('rb_tracker_theme') || 'light';
-        let lastSelectedTagId = localStorage.getItem('rb_last_selected_tag') || '';
+        let currentLang = localStorage.getItem(STORAGE_KEYS.lang) || 'bn';
+        let currentTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'light';
+        let lastSelectedTagId = localStorage.getItem(STORAGE_KEYS.lastTag) || '';
+        let isCloudOnline = false;
 
         let tags = [];
         let leads = [];
         let chartInstance = null;
 
-        async function initData() {
-            await fetchTags();
-            await fetchLeads();
+        function loadLocalData() {
+            let savedLeads = [];
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.leads) 
+                         || localStorage.getItem('dropshipper_tracker_leads_v1')
+                         || localStorage.getItem('dropshipper_leads');
+                if (raw) savedLeads = JSON.parse(raw);
+            } catch (e) { console.warn("Failed to parse local leads", e); }
+
+            let savedTags = [];
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.tags) 
+                         || localStorage.getItem('dropshipper_tracker_tags_v1')
+                         || localStorage.getItem('dropshipper_tags');
+                if (raw) savedTags = JSON.parse(raw);
+            } catch (e) { console.warn("Failed to parse local tags", e); }
+
+            if (!savedTags || savedTags.length === 0) {
+                savedTags = [
+                    { id: 't_general', name: 'General' },
+                    { id: 't_dropshipper', name: 'Dropshipper' },
+                    { id: 't_supplier', name: 'Supplier' }
+                ];
+            }
+
+            return { leads: savedLeads || [], tags: savedTags || [] };
         }
 
-        async function fetchTags() {
-            const { data, error } = await _supabase.from('tags').select('*');
-            if (!error && data) {
-                tags = data;
-                renderTags();
+        function saveLocalData() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.leads, JSON.stringify(leads));
+                localStorage.setItem(STORAGE_KEYS.tags, JSON.stringify(tags));
+            } catch (e) {
+                console.warn("LocalStorage save error", e);
             }
         }
 
-        async function fetchLeads() {
-            const { data, error } = await _supabase.from('leads').select('*').order('id', { ascending: false });
-            if (!error && data) {
-                leads = data.map(l => ({
-                    id: l.id,
-                    role: l.role,
-                    phone: l.phone,
-                    page: l.page,
-                    tagId: l.tag_id,
-                    note: l.note,
-                    status: l.status,
-                    createdAt: l.created_at
-                }));
-                renderLeads();
-                updateChart();
+        function setCloudStatus(online) {
+            isCloudOnline = online;
+            const badge = document.getElementById('syncStatus');
+            if (!badge) return;
+
+            if (online) {
+                badge.className = 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 cursor-default';
+                badge.innerHTML = `<i class="fa-solid fa-cloud"></i> <span>${translations[currentLang].cloudStatusOnline}</span>`;
+                badge.onclick = null;
+            } else {
+                badge.className = 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 cursor-pointer transition hover:bg-amber-200 dark:hover:bg-amber-900/60';
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${translations[currentLang].cloudStatusOffline}</span>`;
+                badge.onclick = showOfflineNotice;
+            }
+        }
+
+        function showOfflineNotice() {
+            alert(currentLang === 'bn' 
+                ? "ক্লাউড ডাটাবেজ সাময়িকভাবে অফলাইন বা পজ রয়েছে। বর্তমানে সমস্ত ডাটা আপনার ব্রাউজারের লোকাল স্টোরেজে নিরাপদে সংরক্ষিত হচ্ছে। ক্লাউড সচল করতে Supabase ড্যাশবোর্ডে গিয়ে প্রজেক্টটি Unpause/Restore করুন।" 
+                : "Cloud database is temporarily offline or paused. All your data is safely being saved to your browser local storage. Unpause/restore in Supabase dashboard to sync with cloud.");
+        }
+
+        async function initData() {
+            // 1. Immediately load local data
+            const local = loadLocalData();
+            tags = local.tags;
+            leads = local.leads;
+            renderTags();
+            renderLeads();
+            updateChart();
+
+            // 2. Try background Supabase sync
+            if (!_supabase) {
+                setCloudStatus(false);
+                return;
+            }
+
+            try {
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 4000));
+
+                const fetchTagsPromise = _supabase.from('tags').select('*');
+                const tagsRes = await Promise.race([fetchTagsPromise, timeoutPromise]);
+                if (!tagsRes.error && tagsRes.data && tagsRes.data.length > 0) {
+                    const cloudTagIds = new Set(tagsRes.data.map(t => t.id));
+                    const localOnlyTags = tags.filter(t => !cloudTagIds.has(t.id));
+                    tags = [...tagsRes.data, ...localOnlyTags];
+                    saveLocalData();
+                    renderTags();
+                }
+
+                const fetchLeadsPromise = _supabase.from('leads').select('*').order('id', { ascending: false });
+                const leadsRes = await Promise.race([fetchLeadsPromise, timeoutPromise]);
+                if (!leadsRes.error && leadsRes.data) {
+                    const cloudLeads = leadsRes.data.map(l => ({
+                        id: l.id,
+                        role: l.role,
+                        phone: l.phone,
+                        page: l.page,
+                        tagId: l.tag_id,
+                        note: l.note,
+                        status: l.status,
+                        createdAt: l.created_at
+                    }));
+
+                    const cloudLeadIds = new Set(cloudLeads.map(l => l.id));
+                    const localOnlyLeads = leads.filter(l => !cloudLeadIds.has(l.id));
+                    leads = [...cloudLeads, ...localOnlyLeads].sort((a, b) => (b.id || 0) - (a.id || 0));
+                    saveLocalData();
+                    renderLeads();
+                    updateChart();
+                    setCloudStatus(true);
+                } else {
+                    setCloudStatus(false);
+                }
+            } catch (err) {
+                console.warn("Supabase background sync:", err.message);
+                setCloudStatus(false);
             }
         }
 
@@ -436,7 +571,7 @@
 
             if (phoneVal) {
                 const cleanInput = phoneVal.replace(/\D/g, '');
-                foundPhone = leads.some(l => l.phone.replace(/\D/g, '') === cleanInput);
+                foundPhone = leads.some(l => l.phone && l.phone.replace(/\D/g, '') === cleanInput);
             }
 
             if (pageVal) {
@@ -475,7 +610,7 @@
                 themeIcon.className = 'fa-solid fa-moon';
                 themeText.innerText = 'Dark Mode';
             }
-            localStorage.setItem('rb_tracker_theme', currentTheme);
+            localStorage.setItem(STORAGE_KEYS.theme, currentTheme);
             if (chartInstance) updateChart();
         }
 
@@ -494,7 +629,7 @@
                 }
             });
 
-            localStorage.setItem('rb_tracker_lang', currentLang);
+            localStorage.setItem(STORAGE_KEYS.lang, currentLang);
             renderLeads();
             if (chartInstance) updateChart();
         }
@@ -506,7 +641,7 @@
 
         function rememberTag(tagId) {
             lastSelectedTagId = tagId;
-            localStorage.setItem('rb_last_selected_tag', tagId);
+            localStorage.setItem(STORAGE_KEYS.lastTag, tagId);
         }
 
         function parsePlatformUrl(rawUrl) {
@@ -560,19 +695,69 @@
         async function toggleRole(leadId) {
             const target = leads.find(l => l.id === leadId);
             if (!target) return;
-            const newRole = target.role === 'D' ? 'S' : 'D';
-            
-            const { error } = await _supabase.from('leads').update({ role: newRole }).eq('id', leadId);
-            if (!error) fetchLeads();
+            target.role = target.role === 'D' ? 'S' : 'D';
+            saveLocalData();
+            renderLeads();
+
+            if (isCloudOnline && _supabase) {
+                try {
+                    await _supabase.from('leads').update({ role: target.role }).eq('id', leadId);
+                } catch (e) {
+                    console.warn("Cloud toggle role error:", e);
+                }
+            }
         }
 
         async function changeStatus(leadId, newStatus) {
-            const { error } = await _supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
-            if (!error) fetchLeads();
+            const target = leads.find(l => l.id === leadId);
+            if (!target) return;
+            target.status = newStatus;
+            saveLocalData();
+            renderLeads();
+            updateChart();
+            closeAllStatusDropdowns();
+
+            if (isCloudOnline && _supabase) {
+                try {
+                    await _supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
+                } catch (e) {
+                    console.warn("Cloud change status error:", e);
+                }
+            }
         }
 
+        function toggleStatusDropdown(event, id) {
+            event.stopPropagation();
+            const menu = document.getElementById(`statusMenu-${id}`);
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            closeAllStatusDropdowns();
+            if (isHidden) {
+                menu.classList.remove('hidden');
+            }
+        }
+
+        function closeAllStatusDropdowns() {
+            document.querySelectorAll('.status-menu').forEach(el => el.classList.add('hidden'));
+        }
+
+        document.addEventListener('click', () => {
+            closeAllStatusDropdowns();
+        });
+
         async function updateNote(leadId, newNote) {
-            await _supabase.from('leads').update({ note: newNote }).eq('id', leadId);
+            const target = leads.find(l => l.id === leadId);
+            if (!target) return;
+            target.note = newNote;
+            saveLocalData();
+
+            if (isCloudOnline && _supabase) {
+                try {
+                    await _supabase.from('leads').update({ note: newNote }).eq('id', leadId);
+                } catch (e) {
+                    console.warn("Cloud update note error:", e);
+                }
+            }
         }
 
         async function addLead(e) {
@@ -598,31 +783,61 @@
                 role: 'D',
                 phone: phone,
                 page: page,
-                tag_id: tagId,
+                tagId: tagId,
                 note: note || '',
                 status: 'blue',
-                created_at: new Date().toLocaleDateString('bn-BD')
+                createdAt: new Date().toLocaleDateString('bn-BD')
             };
 
-            const { error } = await _supabase.from('leads').insert([newLead]);
-            if (!error) {
-                rememberTag(tagId);
-                document.getElementById('phoneInput').value = '';
-                document.getElementById('pageInput').value = '';
-                document.getElementById('noteInput').value = '';
-                document.getElementById('tagSelect').value = lastSelectedTagId;
-                closeAlert();
-                fetchLeads();
-            } else {
-                alert("Error adding lead: " + error.message);
+            // Save locally immediately
+            leads.unshift(newLead);
+            rememberTag(tagId);
+            saveLocalData();
+            renderLeads();
+            updateChart();
+
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('pageInput').value = '';
+            document.getElementById('noteInput').value = '';
+            document.getElementById('tagSelect').value = lastSelectedTagId;
+            closeAlert();
+
+            // Background cloud sync
+            if (isCloudOnline && _supabase) {
+                try {
+                    const dbPayload = {
+                        id: newLead.id,
+                        role: newLead.role,
+                        phone: newLead.phone,
+                        page: newLead.page,
+                        tag_id: newLead.tagId,
+                        note: newLead.note,
+                        status: newLead.status,
+                        created_at: newLead.createdAt
+                    };
+                    const { error } = await _supabase.from('leads').insert([dbPayload]);
+                    if (error) console.warn("Cloud sync error for lead:", error);
+                } catch (e) {
+                    console.warn("Cloud sync failed:", e);
+                }
             }
         }
 
         async function deleteLead(id) {
             const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
             if (confirm(confirmMsg)) {
-                const { error } = await _supabase.from('leads').delete().eq('id', id);
-                if (!error) fetchLeads();
+                leads = leads.filter(l => l.id !== id);
+                saveLocalData();
+                renderLeads();
+                updateChart();
+
+                if (isCloudOnline && _supabase) {
+                    try {
+                        await _supabase.from('leads').delete().eq('id', id);
+                    } catch (e) {
+                        console.warn("Cloud delete lead error:", e);
+                    }
+                }
             }
         }
 
@@ -662,18 +877,34 @@
             const status = document.getElementById('editStatusSelect').value;
             const note = document.getElementById('editNoteInput').value.trim();
 
-            const { error } = await _supabase.from('leads').update({
+            leads = leads.map(l => l.id === id ? {
+                ...l,
                 phone,
                 page,
-                tag_id: tagId,
+                tagId,
                 role,
                 status,
                 note
-            }).eq('id', id);
+            } : l);
 
-            if (!error) {
-                fetchLeads();
-                closeEditModal();
+            saveLocalData();
+            renderLeads();
+            updateChart();
+            closeEditModal();
+
+            if (isCloudOnline && _supabase) {
+                try {
+                    await _supabase.from('leads').update({
+                        phone,
+                        page,
+                        tag_id: tagId,
+                        role,
+                        status,
+                        note
+                    }).eq('id', id);
+                } catch (e) {
+                    console.warn("Cloud update lead error:", e);
+                }
             }
         }
 
@@ -689,11 +920,20 @@
             if (!name) return;
 
             const newId = 't_' + Date.now();
-            const { error } = await _supabase.from('tags').insert([{ id: newId, name: name }]);
-            if (!error) {
-                rememberTag(newId);
-                document.getElementById('newTagName').value = '';
-                fetchTags();
+            const newTag = { id: newId, name: name };
+            tags.push(newTag);
+            rememberTag(newId);
+            saveLocalData();
+            renderTags();
+            document.getElementById('newTagName').value = '';
+
+            if (isCloudOnline && _supabase) {
+                try {
+                    const { error } = await _supabase.from('tags').insert([newTag]);
+                    if (error) console.warn("Cloud tag sync error:", error);
+                } catch (e) {
+                    console.warn("Cloud tag sync failed:", e);
+                }
             }
         }
 
@@ -702,14 +942,21 @@
                 alert(currentLang === 'bn' ? "কমপক্ষে একটি ট্যাগ সিস্টেমে থাকতে হবে।" : "At least one tag must remain in the system.");
                 return;
             }
-            const confirmMsg = currentLang === 'bn' ? "এই ট্যাগটি ক্লাউড থেকে ডিলিট করতে চান?" : "Are you sure you want to delete this tag from cloud?";
+            const confirmMsg = currentLang === 'bn' ? "এই ট্যাগটি ডিলিট করতে চান?" : "Are you sure you want to delete this tag?";
             if (confirm(confirmMsg)) {
-                const { error } = await _supabase.from('tags').delete().eq('id', id);
-                if (!error) {
-                    if (lastSelectedTagId === id && tags.length > 0) {
-                        rememberTag(tags[0].id);
+                tags = tags.filter(t => t.id !== id);
+                if (lastSelectedTagId === id && tags.length > 0) {
+                    rememberTag(tags[0].id);
+                }
+                saveLocalData();
+                renderTags();
+
+                if (isCloudOnline && _supabase) {
+                    try {
+                        await _supabase.from('tags').delete().eq('id', id);
+                    } catch (e) {
+                        console.warn("Cloud delete tag error:", e);
                     }
-                    fetchTags();
                 }
             }
         }
@@ -719,7 +966,6 @@
             const filterEl = document.getElementById('filterTag');
             const listEl = document.getElementById('tagList');
 
-            // Render tags with both symbol and name
             selectEl.innerHTML = tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
             filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
 
@@ -730,7 +976,6 @@
                 selectEl.value = tags[0].id;
             }
 
-            // Render existing tags list in modal with distinct colorful tag icons
             listEl.innerHTML = tags.map(t => {
                 const colorClass = getTagColor(t.id);
                 return `
@@ -764,13 +1009,8 @@
                 const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
                 const colorClass = getTagColor(tagObj.id);
                 const platformInfo = parsePlatformUrl(l.page);
-
-                const colorMap = {
-                    blue: { badgeBg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800', text: 'text-blue-600 dark:text-blue-400' },
-                    yellow: { badgeBg: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800', text: 'text-amber-600 dark:text-amber-400' },
-                    green: { badgeBg: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800', text: 'text-emerald-600 dark:text-emerald-400' },
-                    red: { badgeBg: 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800', text: 'text-rose-600 dark:text-rose-400' }
-                };
+                const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
+                const statusLabel = currentLang === 'bn' ? status.labelBn : status.labelEn;
 
                 return `
                     <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition">
@@ -784,6 +1024,35 @@
                         </td>
 
                         <td class="p-3 font-semibold text-slate-900 dark:text-white">${l.phone}</td>
+
+                        <!-- Status Column Directly After Phone Number (Smart Symbol & Color Coding) -->
+                        <td class="p-3 text-center relative">
+                            <div class="inline-block relative">
+                                <button onclick="toggleStatusDropdown(event, ${l.id})" 
+                                        class="w-8 h-8 rounded-lg font-bold text-xs shadow-sm transition border flex items-center justify-center mx-auto hover:scale-105 active:scale-95 ${status.btnClass}" 
+                                        title="${statusLabel} - ${translations[currentLang].clickToChange}">
+                                    ${status.symbol}
+                                </button>
+                                <div id="statusMenu-${l.id}" class="status-menu hidden absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-40 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 flex gap-1.5 backdrop-blur">
+                                    <button onclick="changeStatus(${l.id}, 'blue')" title="${translations[currentLang].stNew}" 
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 transition">
+                                        <i class="fa-solid fa-bolt"></i>
+                                    </button>
+                                    <button onclick="changeStatus(${l.id}, 'yellow')" title="${translations[currentLang].stContacted}" 
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 transition">
+                                        <i class="fa-solid fa-comments"></i>
+                                    </button>
+                                    <button onclick="changeStatus(${l.id}, 'green')" title="${translations[currentLang].stConverted}" 
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 transition">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    </button>
+                                    <button onclick="changeStatus(${l.id}, 'red')" title="${translations[currentLang].stCancelled}" 
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-700 transition">
+                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
 
                         <td class="p-3">
                             <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" 
@@ -816,21 +1085,11 @@
                         </td>
 
                         <td class="p-3 text-center">
-                            <select onchange="changeStatus(${l.id}, this.value)" 
-                                    class="text-[11px] font-bold px-2 py-1 rounded-lg border outline-none cursor-pointer ${colorMap[l.status].badgeBg} ${colorMap[l.status].text}">
-                                <option value="blue" ${l.status === 'blue' ? 'selected' : ''}>${translations[currentLang].stNew}</option>
-                                <option value="yellow" ${l.status === 'yellow' ? 'selected' : ''}>${translations[currentLang].stContacted}</option>
-                                <option value="green" ${l.status === 'green' ? 'selected' : ''}>${translations[currentLang].stConverted}</option>
-                                <option value="red" ${l.status === 'red' ? 'selected' : ''}>${translations[currentLang].stCancelled}</option>
-                            </select>
-                        </td>
-
-                        <td class="p-3 text-center">
                             <div class="flex items-center justify-center gap-2">
-                                <button onclick="openEditModal(${l.id})" class="text-indigo-500 hover:text-indigo-700 transition p-1">
+                                <button onclick="openEditModal(${l.id})" class="text-indigo-500 hover:text-indigo-700 transition p-1" title="তথ্য পরিবর্তন করুন">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1">
+                                <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1" title="ডিলিট করুন">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -857,8 +1116,8 @@
             const textColor = isDark ? '#cbd5e1' : '#64748b';
 
             const labels = currentLang === 'bn' 
-                ? ['নতুন', 'যোগাযোগকৃত', 'সফল', 'অনগ্রহী'] 
-                : ['New', 'Contacted', 'Converted', 'Cancelled'];
+                ? ['⚡ নতুন', '💬 যোগাযোগকৃত', '✅ সফল', '❌ বাতিল'] 
+                : ['⚡ New', '💬 Contacted', '✅ Converted', '❌ Cancelled'];
 
             const ctx = document.getElementById('improvementChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
@@ -891,11 +1150,13 @@
                 alert(currentLang === 'bn' ? "ডাউনলোড করার মতো তথ্য নেই!" : "No data to export!");
                 return;
             }
-            let csv = "data:text/csv;charset=utf-8,Role,Phone,WhatsApp Link,Page Link,Product Tag,Follow-up Note,Status,Date\n";
+            let csv = "data:text/csv;charset=utf-8,Role,Phone,Status,WhatsApp Link,Page Link,Product Tag,Follow-up Note,Date\n";
             leads.forEach(l => {
                 const tagObj = tags.find(t => t.id === l.tagId) || { name: '' };
                 const waUrl = `https://wa.me/${l.phone}`;
-                csv += `"${l.role === 'D' ? 'Dropshipper' : 'Supplier'}","${l.phone}","${waUrl}","${l.page || ''}","${tagObj.name}","${l.note || ''}","${l.status}","${l.createdAt}"\n`;
+                const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
+                const statusName = currentLang === 'bn' ? status.labelBn : status.labelEn;
+                csv += `"${l.role === 'D' ? 'Dropshipper' : 'Supplier'}","${l.phone}","${statusName}","${waUrl}","${l.page || ''}","${tagObj.name}","${l.note || ''}","${l.createdAt}"\n`;
             });
             const link = document.createElement("a");
             link.href = encodeURI(csv);
