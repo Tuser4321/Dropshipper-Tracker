@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dropshipper Tracker Pro</title>
-    <!-- Browser Tab & Mobile Shortcut Favicon -->
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" href="favicon.svg">
-<meta name="theme-color" content="#4F46E5">
-    <!-- Favicon & Touch Icon -->
+    <!-- Manifest & PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="apple-touch-icon" href="favicon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="theme-color" content="#4F46E5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,6 +60,10 @@
                 <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
                     <i class="fa-solid fa-file-csv"></i> <span data-i18n="exportCSV">CSV ডাউনলোড</span>
                 </button>
+
+                <button id="installAppBtn" onclick="installPWA()" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 animate-pulse">
+                    <i class="fa-solid fa-mobile-screen-button"></i> <span data-i18n="installApp">অ্যাপ ইনস্টল</span>
+                </button>
             </div>
         </div>
 
@@ -95,6 +99,72 @@
 
             <div class="md:col-span-5 h-24 relative flex items-center justify-center pt-1">
                 <canvas id="improvementChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Daily Target & Performance Section -->
+        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-2.5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
+                        <i class="fa-solid fa-bullseye text-sm"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xs md:text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <span data-i18n="dailyTargetTitle">দৈনিক টার্গেট ও পারফরম্যান্স</span>
+                            <span id="targetStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                                <i class="fa-solid fa-triangle-exclamation"></i> অসম্পূর্ণ ⚠️
+                            </span>
+                        </h2>
+                        <p id="targetCurrentDate" class="text-[10px] text-slate-400 dark:text-slate-500 font-medium">আজকের তারিখ</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleTargetModal()" class="bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-sliders"></i> <span data-i18n="btnSetTarget">টার্গেট পরিবর্তন</span>
+                    </button>
+                    <button onclick="toggleHistoryModal()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-clock-rotate-left text-sky-500"></i> <span data-i18n="btnViewHistory">হিস্ট্রি দেখুন</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Two Target Progress Cards: Leads & Contacts -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <!-- Leads Target Card -->
+                <div class="bg-slate-50/80 dark:bg-slate-700/30 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-600 space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-plus text-indigo-500"></i> <span data-i18n="leadsTargetLabel">আজকের লিড সংগ্রহ</span>
+                        </span>
+                        <span class="font-bold text-slate-900 dark:text-white" id="leadsTargetDisplay">0 / 20</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-600 h-2.5 rounded-full overflow-hidden">
+                        <div id="leadsProgressBar" class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
+                        <span id="leadsProgressPercent">০% অর্জিত</span>
+                        <span id="leadsRemainingText" class="font-medium text-slate-600 dark:text-slate-300">আর ২০ টি লিড বাকি</span>
+                    </div>
+                </div>
+
+                <!-- Contacts Target Card -->
+                <div class="bg-slate-50/80 dark:bg-slate-700/30 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-600 space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-comments text-amber-500"></i> <span data-i18n="contactsTargetLabel">আজকের কন্টাক্ট / ফলো-আপ</span>
+                        </span>
+                        <span class="font-bold text-slate-900 dark:text-white" id="contactsTargetDisplay">0 / 15</span>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-600 h-2.5 rounded-full overflow-hidden">
+                        <div id="contactsProgressBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-slate-500 dark:text-slate-400">
+                        <span id="contactsProgressPercent">০% অর্জিত</span>
+                        <span id="contactsRemainingText" class="font-medium text-slate-600 dark:text-slate-300">আর ১৫ জনের সাথে যোগাযোগ বাকি</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -253,6 +323,93 @@
         </div>
     </div>
 
+    <!-- Daily Target Settings Modal -->
+    <div id="targetModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-5 max-w-sm w-full shadow-xl space-y-3.5 border dark:border-slate-700">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="modalTargetTitle">ডেইলি টার্গেট সেটিংস</span>
+                </h3>
+                <button onclick="toggleTargetModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form onsubmit="saveTargetSettings(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblDailyLeadsTarget">প্রতিদিনের লিড টার্গেট *</label>
+                    <input type="number" id="inputDailyLeads" min="1" max="1000" required 
+                           class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">প্রতিদিন নূন্যতম কতটি নতুন লিড কালেক্ট করতে চান।</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblDailyContactsTarget">প্রতিদিনের কন্টাক্ট / মেসেজ টার্গেট *</label>
+                    <input type="number" id="inputDailyContacts" min="1" max="1000" required 
+                           class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">প্রতিদিন কতজনের সাথে যোগাযোগ (WhatsApp/Message) করতে চান।</p>
+                </div>
+
+                <div class="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-[11px] text-indigo-700 dark:text-indigo-300 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-xs mt-0.5"></i>
+                    <span>টার্গেটের চেয়ে বেশি লিড বা যোগাযোগ করলে কোনো সমস্যা নেই, তবে কম পূরণ হলে ওই নির্দিষ্ট দিন "অসম্পূর্ণ" দেখাবে।</span>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t dark:border-slate-700">
+                    <button type="button" onclick="toggleTargetModal()" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600" data-i18n="btnCancel">বাতিল</button>
+                    <button type="submit" class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700" data-i18n="btnSaveTarget">টার্গেট সেভ করুন</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Target History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-5 max-w-2xl w-full shadow-xl space-y-4 border dark:border-slate-700 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-2">
+                <h3 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-sky-500"></i> <span data-i18n="modalHistoryTitle">পূর্বের টার্গেট ও পারফরম্যান্স হিস্ট্রি</span>
+                </h3>
+                <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Overview Badges in History -->
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-50 dark:bg-slate-700/40 p-2 rounded-lg border dark:border-slate-600">
+                    <p class="text-[10px] text-slate-400 uppercase font-semibold">ট্র্যাককৃত দিন</p>
+                    <h4 id="histTotalDays" class="text-sm md:text-base font-bold text-slate-800 dark:text-white">0</h4>
+                </div>
+                <div class="bg-emerald-50 dark:bg-emerald-950/40 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    <p class="text-[10px] text-emerald-600 uppercase font-semibold">সম্পূর্ণ দিন</p>
+                    <h4 id="histCompletedDays" class="text-sm md:text-base font-bold text-emerald-600">0</h4>
+                </div>
+                <div class="bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p class="text-[10px] text-amber-600 uppercase font-semibold">অসম্পূর্ণ দিন</p>
+                    <h4 id="histIncompleteDays" class="text-sm md:text-base font-bold text-amber-600">0</h4>
+                </div>
+            </div>
+
+            <!-- History Table List -->
+            <div class="overflow-y-auto flex-1 border dark:border-slate-700 rounded-lg">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100/70 dark:bg-slate-700/50 border-b dark:border-slate-700 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            <th class="p-2.5">তারিখ (Date)</th>
+                            <th class="p-2.5 text-center">লিড সংগ্রহ (Leads)</th>
+                            <th class="p-2.5 text-center">কন্টাক্ট (Contacted)</th>
+                            <th class="p-2.5 text-center">ফলাফল (Status)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="targetHistoryBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                        <tr><td colspan="4" class="p-6 text-center text-slate-400">হিস্ট্রি লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t dark:border-slate-700">
+                <button onclick="toggleHistoryModal()" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600" data-i18n="btnClose">বন্ধ করুন</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Application Script -->
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
@@ -292,14 +449,52 @@
             }
         };
 
-        // Storage Keys for Dual-Persistence (Local Fallback + Cloud Sync)
+        // Storage Keys for Dual-Persistence & Targets
         const STORAGE_KEYS = {
             leads: 'dropshipper_tracker_leads_v2',
             tags: 'dropshipper_tracker_tags_v2',
             lang: 'rb_tracker_lang',
             theme: 'rb_tracker_theme',
-            lastTag: 'rb_last_selected_tag'
+            lastTag: 'rb_last_selected_tag',
+            targetSettings: 'dropshipper_target_settings',
+            dailyActivities: 'dropshipper_daily_activities'
         };
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    console.log('PWA Service Worker registered:', reg.scope);
+                }).catch((err) => {
+                    console.warn('Service Worker registration error:', err);
+                });
+            });
+        }
+
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        const btn = document.getElementById('installAppBtn');
+                        if (btn) btn.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                alert(currentLang === 'bn' 
+                    ? "অ্যাপটি সরাসরি ইনস্টল করতে আপনার ব্রাউজারের থ্রি-ডট (⋮) মেনুতে চাপ দিয়ে 'Install app' বা 'Add to Home screen' নির্বাচন করুন।" 
+                    : "To install this app, tap your browser menu (⋮) and select 'Install app' or 'Add to Home screen'.");
+            }
+        }
 
         // Distinct Colors Palette for Dynamic Tag Icons
         const TAG_COLORS = [
@@ -323,20 +518,59 @@
             return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
         }
 
-        // Convert Bangla Numerals to English Numerals
+        // Number conversion helpers
         function convertBnToEnNum(inputStr) {
             if (!inputStr) return '';
             const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
             const enDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-            let res = inputStr;
+            let res = String(inputStr);
             for (let i = 0; i < 10; i++) {
                 res = res.replace(new RegExp(bnDigits[i], 'g'), enDigits[i]);
             }
             return res;
         }
 
+        function convertEnToBnNum(inputStr) {
+            if (inputStr === null || inputStr === undefined) return '';
+            const enDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+            let res = String(inputStr);
+            for (let i = 0; i < 10; i++) {
+                res = res.replace(new RegExp(enDigits[i], 'g'), bnDigits[i]);
+            }
+            return res;
+        }
+
         function autoConvertPhone(el) {
             el.value = convertBnToEnNum(el.value);
+        }
+
+        // Date Helpers
+        function getLocalDateKey(dateObj = new Date()) {
+            if (isNaN(dateObj.getTime())) dateObj = new Date();
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDisplayDate(dateKey, lang = currentLang) {
+            if (!dateKey) return '';
+            const [y, m, d] = dateKey.split('-').map(Number);
+            const isToday = getLocalDateKey() === dateKey;
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const isYesterday = getLocalDateKey(yesterday) === dateKey;
+
+            if (lang === 'bn') {
+                const prefix = isToday ? 'আজ, ' : isYesterday ? 'গতকাল, ' : '';
+                const monthsBn = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+                return `${prefix}${convertEnToBnNum(d)} ${monthsBn[m - 1]} ${convertEnToBnNum(y)}`;
+            } else {
+                const prefix = isToday ? 'Today, ' : isYesterday ? 'Yesterday, ' : '';
+                const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${prefix}${d} ${monthsEn[m - 1]} ${y}`;
+            }
         }
 
         const translations = {
@@ -381,7 +615,21 @@
                 btnCancel: "বাতিল",
                 btnSaveEdit: "পরিবর্তন সেভ করুন",
                 noData: "কোনো তথ্য পাওয়া যায়নি",
-                clickToChange: "ক্লিক করে পরিবর্তন করুন"
+                clickToChange: "ক্লিক করে পরিবর্তন করুন",
+                installApp: "অ্যাপ ইনস্টল",
+                dailyTargetTitle: "দৈনিক টার্গেট ও পারফরম্যান্স",
+                btnSetTarget: "টার্গেট পরিবর্তন",
+                btnViewHistory: "হিস্ট্রি দেখুন",
+                leadsTargetLabel: "আজকের লিড সংগ্রহ",
+                contactsTargetLabel: "আজকের কন্টাক্ট / ফলো-আপ",
+                modalTargetTitle: "ডেইলি টার্গেট সেটিংস",
+                lblDailyLeadsTarget: "প্রতিদিনের লিড টার্গেট *",
+                lblDailyContactsTarget: "প্রতিদিনের কন্টাক্ট / মেসেজ টার্গেট *",
+                btnSaveTarget: "টার্গেট সেভ করুন",
+                modalHistoryTitle: "পূর্বের টার্গেট ও পারফরম্যান্স হিস্ট্রি",
+                btnClose: "বন্ধ করুন",
+                statusCompleted: "লক্ষ্য পূরণ ✅",
+                statusIncomplete: "অসম্পূর্ণ ⚠️"
             },
             en: {
                 cloudStatus: "Supabase Cloud Active",
@@ -424,7 +672,21 @@
                 btnCancel: "Cancel",
                 btnSaveEdit: "Save Changes",
                 noData: "No data available",
-                clickToChange: "Click to change"
+                clickToChange: "Click to change",
+                installApp: "Install App",
+                dailyTargetTitle: "Daily Target & Performance",
+                btnSetTarget: "Change Target",
+                btnViewHistory: "View History",
+                leadsTargetLabel: "Today's Leads Collected",
+                contactsTargetLabel: "Today's Contacts / Outreach",
+                modalTargetTitle: "Daily Target Settings",
+                lblDailyLeadsTarget: "Daily Leads Target *",
+                lblDailyContactsTarget: "Daily Contacts Target *",
+                btnSaveTarget: "Save Target",
+                modalHistoryTitle: "Past Target & Performance History",
+                btnClose: "Close",
+                statusCompleted: "Target Met ✅",
+                statusIncomplete: "Incomplete ⚠️"
             }
         };
 
@@ -437,6 +699,297 @@
         let leads = [];
         let chartInstance = null;
 
+        // Daily Target Functions
+        function getTargetSettings() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.targetSettings);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { dailyLeads: 20, dailyContacts: 15 };
+        }
+
+        function saveTargetSettings(e) {
+            if (e) e.preventDefault();
+            const leadsVal = parseInt(document.getElementById('inputDailyLeads').value) || 20;
+            const contactsVal = parseInt(document.getElementById('inputDailyContacts').value) || 15;
+            
+            const settings = {
+                dailyLeads: Math.max(1, leadsVal),
+                dailyContacts: Math.max(1, contactsVal)
+            };
+            localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(settings));
+            toggleTargetModal();
+            updateTargetProgress();
+        }
+
+        function toggleTargetModal() {
+            const modal = document.getElementById('targetModal');
+            if (!modal) return;
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                const settings = getTargetSettings();
+                document.getElementById('inputDailyLeads').value = settings.dailyLeads;
+                document.getElementById('inputDailyContacts').value = settings.dailyContacts;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function toggleHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            if (!modal) return;
+            const isHidden = modal.classList.contains('hidden');
+            if (isHidden) {
+                renderTargetHistory();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function getDailyActivities() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.dailyActivities);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return {};
+        }
+
+        function recordContactActivity(leadId) {
+            const todayKey = getLocalDateKey();
+            const activities = getDailyActivities();
+            if (!activities[todayKey]) {
+                activities[todayKey] = { contactedLeadIds: [] };
+            }
+            if (!activities[todayKey].contactedLeadIds) {
+                activities[todayKey].contactedLeadIds = [];
+            }
+            const strId = String(leadId);
+            if (!activities[todayKey].contactedLeadIds.includes(strId)) {
+                activities[todayKey].contactedLeadIds.push(strId);
+                localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(activities));
+                updateTargetProgress();
+            }
+        }
+
+        function getStatsForDate(dateKey) {
+            const settings = getTargetSettings();
+            const activities = getDailyActivities();
+            const dayActivity = activities[dateKey] || { contactedLeadIds: [] };
+
+            // Count leads created on this date
+            const leadsOnDate = leads.filter(l => {
+                const lDate = getLocalDateKey(new Date(Number(l.id)));
+                return lDate === dateKey;
+            });
+
+            const leadsCount = leadsOnDate.length;
+
+            // Count contacts made on this date
+            const contactedSet = new Set(dayActivity.contactedLeadIds ? dayActivity.contactedLeadIds.map(String) : []);
+            leadsOnDate.forEach(l => {
+                if (l.status === 'yellow' || l.status === 'green') {
+                    contactedSet.add(String(l.id));
+                }
+            });
+            const contactedCount = contactedSet.size;
+
+            const leadsTarget = dayActivity.leadsTarget || settings.dailyLeads;
+            const contactsTarget = dayActivity.contactsTarget || settings.dailyContacts;
+
+            const isLeadsMet = leadsCount >= leadsTarget;
+            const isContactsMet = contactedCount >= contactsTarget;
+            const isOverallMet = isLeadsMet && isContactsMet;
+
+            return {
+                dateKey,
+                leadsCount,
+                leadsTarget,
+                contactedCount,
+                contactsTarget,
+                isLeadsMet,
+                isContactsMet,
+                isOverallMet
+            };
+        }
+
+        function updateTargetProgress() {
+            const todayKey = getLocalDateKey();
+            const stats = getStatsForDate(todayKey);
+
+            // Date display
+            const dateEl = document.getElementById('targetCurrentDate');
+            if (dateEl) {
+                dateEl.innerText = formatDisplayDate(todayKey);
+            }
+
+            // Status Badge
+            const badgeEl = document.getElementById('targetStatusBadge');
+            if (badgeEl) {
+                if (stats.isOverallMet) {
+                    badgeEl.className = 'text-[10px] px-2.5 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1';
+                    badgeEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${translations[currentLang].statusCompleted}`;
+                } else {
+                    badgeEl.className = 'text-[10px] px-2.5 py-0.5 rounded-full font-semibold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1';
+                    badgeEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${translations[currentLang].statusIncomplete}`;
+                }
+            }
+
+            // Leads Progress Card
+            const leadsDisplay = document.getElementById('leadsTargetDisplay');
+            const leadsBar = document.getElementById('leadsProgressBar');
+            const leadsPercentEl = document.getElementById('leadsProgressPercent');
+            const leadsRemainEl = document.getElementById('leadsRemainingText');
+
+            if (leadsDisplay) {
+                leadsDisplay.innerText = currentLang === 'bn' 
+                    ? `${convertEnToBnNum(stats.leadsCount)} / ${convertEnToBnNum(stats.leadsTarget)}`
+                    : `${stats.leadsCount} / ${stats.leadsTarget}`;
+            }
+            const leadsPct = stats.leadsTarget > 0 ? Math.round((stats.leadsCount / stats.leadsTarget) * 100) : 0;
+            if (leadsBar) {
+                leadsBar.style.width = Math.min(100, leadsPct) + '%';
+                leadsBar.className = stats.isLeadsMet 
+                    ? 'h-full bg-emerald-500 rounded-full transition-all duration-500 shadow-sm' 
+                    : 'h-full bg-indigo-600 rounded-full transition-all duration-500';
+            }
+            if (leadsPercentEl) {
+                leadsPercentEl.innerText = currentLang === 'bn' 
+                    ? `${convertEnToBnNum(leadsPct)}% অর্জিত` 
+                    : `${leadsPct}% achieved`;
+            }
+            if (leadsRemainEl) {
+                if (stats.isLeadsMet) {
+                    const extra = stats.leadsCount - stats.leadsTarget;
+                    leadsRemainEl.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
+                    leadsRemainEl.innerText = currentLang === 'bn' 
+                        ? (extra > 0 ? `✓ সম্পূর্ণ (+${convertEnToBnNum(extra)} অতিরিক্ত)` : '✓ লক্ষ্য অর্জিত')
+                        : (extra > 0 ? `✓ Completed (+${extra} extra)` : '✓ Target Achieved');
+                } else {
+                    const remain = stats.leadsTarget - stats.leadsCount;
+                    leadsRemainEl.className = 'font-medium text-amber-600 dark:text-amber-400';
+                    leadsRemainEl.innerText = currentLang === 'bn' 
+                        ? `আর ${convertEnToBnNum(remain)} টি লিড বাকি` 
+                        : `${remain} leads remaining`;
+                }
+            }
+
+            // Contacts Progress Card
+            const contactsDisplay = document.getElementById('contactsTargetDisplay');
+            const contactsBar = document.getElementById('contactsProgressBar');
+            const contactsPercentEl = document.getElementById('contactsProgressPercent');
+            const contactsRemainEl = document.getElementById('contactsRemainingText');
+
+            if (contactsDisplay) {
+                contactsDisplay.innerText = currentLang === 'bn' 
+                    ? `${convertEnToBnNum(stats.contactedCount)} / ${convertEnToBnNum(stats.contactsTarget)}`
+                    : `${stats.contactedCount} / ${stats.contactsTarget}`;
+            }
+            const contactsPct = stats.contactsTarget > 0 ? Math.round((stats.contactedCount / stats.contactsTarget) * 100) : 0;
+            if (contactsBar) {
+                contactsBar.style.width = Math.min(100, contactsPct) + '%';
+                contactsBar.className = stats.isContactsMet 
+                    ? 'h-full bg-emerald-500 rounded-full transition-all duration-500 shadow-sm' 
+                    : 'h-full bg-amber-500 rounded-full transition-all duration-500';
+            }
+            if (contactsPercentEl) {
+                contactsPercentEl.innerText = currentLang === 'bn' 
+                    ? `${convertEnToBnNum(contactsPct)}% অর্জিত` 
+                    : `${contactsPct}% achieved`;
+            }
+            if (contactsRemainEl) {
+                if (stats.isContactsMet) {
+                    const extra = stats.contactedCount - stats.contactsTarget;
+                    contactsRemainEl.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
+                    contactsRemainEl.innerText = currentLang === 'bn' 
+                        ? (extra > 0 ? `✓ সম্পূর্ণ (+${convertEnToBnNum(extra)} অতিরিক্ত)` : '✓ লক্ষ্য অর্জিত')
+                        : (extra > 0 ? `✓ Completed (+${extra} extra)` : '✓ Target Achieved');
+                } else {
+                    const remain = stats.contactsTarget - stats.contactedCount;
+                    contactsRemainEl.className = 'font-medium text-amber-600 dark:text-amber-400';
+                    contactsRemainEl.innerText = currentLang === 'bn' 
+                        ? `আর ${convertEnToBnNum(remain)} জনের সাথে যোগাযোগ বাকি` 
+                        : `${remain} contacts remaining`;
+                }
+            }
+        }
+
+        function renderTargetHistory() {
+            const tbody = document.getElementById('targetHistoryBody');
+            if (!tbody) return;
+
+            const allDates = new Set();
+            const todayKey = getLocalDateKey();
+            allDates.add(todayKey);
+
+            const activities = getDailyActivities();
+            Object.keys(activities).forEach(d => allDates.add(d));
+
+            leads.forEach(l => {
+                if (l.id) {
+                    allDates.add(getLocalDateKey(new Date(Number(l.id))));
+                }
+            });
+
+            const sortedDates = Array.from(allDates).sort().reverse();
+
+            let totalDays = sortedDates.length;
+            let completedDays = 0;
+            let incompleteDays = 0;
+
+            const rowsHtml = sortedDates.map(dateKey => {
+                const stats = getStatsForDate(dateKey);
+                if (stats.isOverallMet) completedDays++;
+                else incompleteDays++;
+
+                const isToday = dateKey === todayKey;
+                const formattedDate = formatDisplayDate(dateKey);
+
+                const leadsPct = stats.leadsTarget > 0 ? Math.round((stats.leadsCount / stats.leadsTarget) * 100) : 0;
+                const contactsPct = stats.contactsTarget > 0 ? Math.round((stats.contactedCount / stats.contactsTarget) * 100) : 0;
+
+                const leadsBadge = stats.isLeadsMet
+                    ? `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-check"></i> ${currentLang === 'bn' ? convertEnToBnNum(stats.leadsCount) : stats.leadsCount}/${currentLang === 'bn' ? convertEnToBnNum(stats.leadsTarget) : stats.leadsTarget} (${currentLang === 'bn' ? convertEnToBnNum(leadsPct) : leadsPct}%)</span>`
+                    : `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> ${currentLang === 'bn' ? convertEnToBnNum(stats.leadsCount) : stats.leadsCount}/${currentLang === 'bn' ? convertEnToBnNum(stats.leadsTarget) : stats.leadsTarget} (${currentLang === 'bn' ? convertEnToBnNum(leadsPct) : leadsPct}%)</span>`;
+
+                const contactsBadge = stats.isContactsMet
+                    ? `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-check"></i> ${currentLang === 'bn' ? convertEnToBnNum(stats.contactedCount) : stats.contactedCount}/${currentLang === 'bn' ? convertEnToBnNum(stats.contactsTarget) : stats.contactsTarget} (${currentLang === 'bn' ? convertEnToBnNum(contactsPct) : contactsPct}%)</span>`
+                    : `<span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation"></i> ${currentLang === 'bn' ? convertEnToBnNum(stats.contactedCount) : stats.contactedCount}/${currentLang === 'bn' ? convertEnToBnNum(stats.contactsTarget) : stats.contactsTarget} (${currentLang === 'bn' ? convertEnToBnNum(contactsPct) : contactsPct}%)</span>`;
+
+                const statusBadge = stats.isOverallMet
+                    ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">${translations[currentLang].statusCompleted}</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">${translations[currentLang].statusIncomplete}</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition ${isToday ? 'bg-indigo-50/40 dark:bg-indigo-950/20 font-medium' : ''}">
+                        <td class="p-2.5 text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                            ${formattedDate}
+                            ${isToday ? `<span class="ml-1 text-[9px] bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold">${currentLang === 'bn' ? 'আজ' : 'Today'}</span>` : ''}
+                        </td>
+                        <td class="p-2.5 text-center">${leadsBadge}</td>
+                        <td class="p-2.5 text-center">${contactsBadge}</td>
+                        <td class="p-2.5 text-center whitespace-nowrap">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rowsHtml || `<tr><td colspan="4" class="p-6 text-center text-slate-400">${translations[currentLang].noData}</td></tr>`;
+
+            const histTotal = document.getElementById('histTotalDays');
+            const histCompleted = document.getElementById('histCompletedDays');
+            const histIncomplete = document.getElementById('histIncompleteDays');
+
+            if (histTotal) histTotal.innerText = currentLang === 'bn' ? convertEnToBnNum(totalDays) : totalDays;
+            if (histCompleted) histCompleted.innerText = currentLang === 'bn' ? convertEnToBnNum(completedDays) : completedDays;
+            if (histIncomplete) histIncomplete.innerText = currentLang === 'bn' ? convertEnToBnNum(incompleteDays) : incompleteDays;
+        }
+
+        // Data Storage & Fallback Management
         function loadLocalData() {
             let savedLeads = [];
             try {
@@ -504,6 +1057,7 @@
             renderTags();
             renderLeads();
             updateChart();
+            updateTargetProgress();
 
             // 2. Try background Supabase sync
             if (!_supabase) {
@@ -544,6 +1098,7 @@
                     saveLocalData();
                     renderLeads();
                     updateChart();
+                    updateTargetProgress();
                     setCloudStatus(true);
                 } else {
                     setCloudStatus(false);
@@ -631,6 +1186,7 @@
 
             localStorage.setItem(STORAGE_KEYS.lang, currentLang);
             renderLeads();
+            updateTargetProgress();
             if (chartInstance) updateChart();
         }
 
@@ -682,6 +1238,7 @@
         }
 
         async function triggerWhatsApp(leadId, phone, currentStatus) {
+            recordContactActivity(leadId);
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
             else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
@@ -712,9 +1269,13 @@
             const target = leads.find(l => l.id === leadId);
             if (!target) return;
             target.status = newStatus;
+            if (newStatus === 'yellow' || newStatus === 'green') {
+                recordContactActivity(leadId);
+            }
             saveLocalData();
             renderLeads();
             updateChart();
+            updateTargetProgress();
             closeAllStatusDropdowns();
 
             if (isCloudOnline && _supabase) {
@@ -789,12 +1350,12 @@
                 createdAt: new Date().toLocaleDateString('bn-BD')
             };
 
-            // Save locally immediately
             leads.unshift(newLead);
             rememberTag(tagId);
             saveLocalData();
             renderLeads();
             updateChart();
+            updateTargetProgress();
 
             document.getElementById('phoneInput').value = '';
             document.getElementById('pageInput').value = '';
@@ -802,7 +1363,6 @@
             document.getElementById('tagSelect').value = lastSelectedTagId;
             closeAlert();
 
-            // Background cloud sync
             if (isCloudOnline && _supabase) {
                 try {
                     const dbPayload = {
@@ -830,6 +1390,7 @@
                 saveLocalData();
                 renderLeads();
                 updateChart();
+                updateTargetProgress();
 
                 if (isCloudOnline && _supabase) {
                     try {
@@ -877,6 +1438,10 @@
             const status = document.getElementById('editStatusSelect').value;
             const note = document.getElementById('editNoteInput').value.trim();
 
+            if (status === 'yellow' || status === 'green') {
+                recordContactActivity(id);
+            }
+
             leads = leads.map(l => l.id === id ? {
                 ...l,
                 phone,
@@ -890,6 +1455,7 @@
             saveLocalData();
             renderLeads();
             updateChart();
+            updateTargetProgress();
             closeEditModal();
 
             if (isCloudOnline && _supabase) {
