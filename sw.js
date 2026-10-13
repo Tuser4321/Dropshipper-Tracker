@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tracker-pro-v1';
+const CACHE_NAME = 'tracker-pro-v2';
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -34,6 +34,11 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Always bypass cache for cloud database APIs
+  if (url.hostname.includes('supabase.co') || url.hostname.includes('extendsclass.com')) {
+    return;
+  }
 
   // If local origin, try cache first, then network
   if (url.origin === location.origin) {

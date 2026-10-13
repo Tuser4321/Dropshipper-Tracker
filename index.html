@@ -36,13 +36,18 @@
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     Dropshipper Tracker Pro
                 </h1>
-                <span id="syncStatus" class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-cloud"></i> <span data-i18n="cloudStatus">Supabase ক্লাউড সক্রিয়</span>
+                <span id="syncStatus" onclick="showCloudDetails()" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-indigo-200 dark:border-indigo-800 transition hover:shadow" title="ক্লাউড স্ট্যাটাস দেখতে ক্লিক করুন">
+                    <i id="syncStatusIcon" class="fa-solid fa-arrows-rotate fa-spin text-xs"></i> <span id="syncStatusText">ক্লাউড সিঙ্ক হচ্ছে...</span>
                 </span>
             </div>
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
+                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
+                    <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
+                    <span data-i18n="btnSync">সিঙ্ক করুন</span>
+                </button>
+
                 <button onclick="toggleTheme()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                     <span id="themeText">Dark Mode</span>
@@ -65,6 +70,15 @@
                     <i class="fa-solid fa-mobile-screen-button"></i> <span data-i18n="installApp">অ্যাপ ইনস্টল</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Sync Toast Notification Banner -->
+        <div id="syncToast" class="hidden p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-xs items-center justify-between shadow-sm transition-all duration-300">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                <span id="syncToastMsg">ক্লাউড সিঙ্ক সফল হয়েছে!</span>
+            </div>
+            <button onclick="closeSyncToast()" class="text-emerald-500 hover:text-emerald-700 font-bold ml-2"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <!-- Alert / Duplicate Warning Banner -->
@@ -414,11 +428,76 @@
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
         const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
+        const BACKUP_CLOUD_URL = "https://extendsclass.com/api/json-storage/bin/facdcfe";
         let _supabase = null;
         try {
             _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
             console.warn("Supabase init error:", e);
+        }
+
+        // Direct Cloud API Helpers with robust 10s timeout
+        async function apiSupabase(endpoint, method = 'GET', body = null) {
+            const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+            const headers = {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            };
+            if (body) {
+                headers['Content-Type'] = 'application/json';
+                if (method === 'POST') headers['Prefer'] = 'return=representation';
+            }
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers,
+                    body: body ? JSON.stringify(body) : undefined,
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+                if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
+                if (method === 'DELETE') return true;
+                const text = await res.text();
+                return text ? JSON.parse(text) : null;
+            } catch (e) {
+                clearTimeout(timer);
+                throw e;
+            }
+        }
+
+        async function apiBackupCloudGet() {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            try {
+                const res = await fetch(BACKUP_CLOUD_URL, { signal: controller.signal });
+                clearTimeout(timer);
+                if (!res.ok) throw new Error(`Backup Cloud HTTP ${res.status}`);
+                return await res.json();
+            } catch (e) {
+                clearTimeout(timer);
+                throw e;
+            }
+        }
+
+        async function apiBackupCloudPut(payload) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            try {
+                const res = await fetch(BACKUP_CLOUD_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+                return res.ok;
+            } catch (e) {
+                clearTimeout(timer);
+                console.warn("Backup cloud put error:", e);
+                return false;
+            }
         }
 
         // Status Smart Symbols & Action-Aligned Color Coding
@@ -629,7 +708,8 @@
                 modalHistoryTitle: "পূর্বের টার্গেট ও পারফরম্যান্স হিস্ট্রি",
                 btnClose: "বন্ধ করুন",
                 statusCompleted: "লক্ষ্য পূরণ ✅",
-                statusIncomplete: "অসম্পূর্ণ ⚠️"
+                statusIncomplete: "অসম্পূর্ণ ⚠️",
+                btnSync: "সিঙ্ক করুন"
             },
             en: {
                 cloudStatus: "Supabase Cloud Active",
@@ -686,7 +766,8 @@
                 modalHistoryTitle: "Past Target & Performance History",
                 btnClose: "Close",
                 statusCompleted: "Target Met ✅",
-                statusIncomplete: "Incomplete ⚠️"
+                statusIncomplete: "Incomplete ⚠️",
+                btnSync: "Sync Now"
             }
         };
 
@@ -1027,30 +1108,240 @@
             }
         }
 
-        function setCloudStatus(online) {
-            isCloudOnline = online;
-            const badge = document.getElementById('syncStatus');
-            if (!badge) return;
+        let cloudStatus = {
+            isSyncing: false,
+            supabaseOnline: false,
+            backupOnline: false,
+            lastSyncTime: null
+        };
 
-            if (online) {
-                badge.className = 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 cursor-default';
-                badge.innerHTML = `<i class="fa-solid fa-cloud"></i> <span>${translations[currentLang].cloudStatusOnline}</span>`;
-                badge.onclick = null;
+        function updateSyncStatusUI() {
+            const badge = document.getElementById('syncStatus');
+            const icon = document.getElementById('syncStatusIcon');
+            const text = document.getElementById('syncStatusText');
+            const syncBtnIcon = document.getElementById('manualSyncIcon');
+
+            if (!badge || !text) return;
+
+            if (cloudStatus.isSyncing) {
+                badge.className = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-indigo-200 dark:border-indigo-800 transition hover:shadow';
+                if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin text-xs';
+                text.innerText = currentLang === 'bn' ? 'ক্লাউড সিঙ্ক হচ্ছে...' : 'Syncing cloud...';
+                if (syncBtnIcon) syncBtnIcon.classList.add('fa-spin');
+                return;
+            }
+
+            if (syncBtnIcon) syncBtnIcon.classList.remove('fa-spin');
+
+            const countStr = currentLang === 'bn' ? convertEnToBnNum(leads.length) : leads.length;
+
+            if (cloudStatus.supabaseOnline && cloudStatus.backupOnline) {
+                badge.className = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-emerald-300 dark:border-emerald-800 transition hover:shadow';
+                if (icon) icon.className = 'fa-solid fa-cloud-bolt text-xs text-emerald-600 dark:text-emerald-400';
+                text.innerText = currentLang === 'bn' 
+                    ? `ডুয়াল ক্লাউড সক্রিয় (${countStr} লিড)` 
+                    : `Dual Cloud Active (${countStr} leads)`;
+            } else if (cloudStatus.supabaseOnline) {
+                badge.className = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-emerald-300 dark:border-emerald-800 transition hover:shadow';
+                if (icon) icon.className = 'fa-solid fa-cloud text-xs text-emerald-600 dark:text-emerald-400';
+                text.innerText = currentLang === 'bn' 
+                    ? `Supabase ক্লাউড সক্রিয় (${countStr} লিড)` 
+                    : `Supabase Active (${countStr} leads)`;
+            } else if (cloudStatus.backupOnline) {
+                badge.className = 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-sky-300 dark:border-sky-800 transition hover:shadow';
+                if (icon) icon.className = 'fa-solid fa-cloud text-xs text-sky-600 dark:text-sky-400';
+                text.innerText = currentLang === 'bn' 
+                    ? `ব্যাকআপ ক্লাউড সক্রিয় (${countStr} লিড)` 
+                    : `Backup Cloud Active (${countStr} leads)`;
             } else {
-                badge.className = 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 text-[11px] px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1 cursor-pointer transition hover:bg-amber-200 dark:hover:bg-amber-900/60';
-                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${translations[currentLang].cloudStatusOffline}</span>`;
-                badge.onclick = showOfflineNotice;
+                badge.className = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-amber-300 dark:border-amber-800 transition hover:shadow';
+                if (icon) icon.className = 'fa-solid fa-triangle-exclamation text-xs text-amber-600 dark:text-amber-400';
+                text.innerText = currentLang === 'bn' ? 'অফলাইন মোড (লোকাল সেভ)' : 'Offline Mode (Local Save)';
             }
         }
 
-        function showOfflineNotice() {
-            alert(currentLang === 'bn' 
-                ? "ক্লাউড ডাটাবেজ সাময়িকভাবে অফলাইন বা পজ রয়েছে। বর্তমানে সমস্ত ডাটা আপনার ব্রাউজারের লোকাল স্টোরেজে নিরাপদে সংরক্ষিত হচ্ছে। ক্লাউড সচল করতে Supabase ড্যাশবোর্ডে গিয়ে প্রজেক্টটি Unpause/Restore করুন।" 
-                : "Cloud database is temporarily offline or paused. All your data is safely being saved to your browser local storage. Unpause/restore in Supabase dashboard to sync with cloud.");
+        function showCloudDetails() {
+            const supa = cloudStatus.supabaseOnline ? "সক্রিয় (Online) ✅" : "সংযোগহীন ⚠️";
+            const backup = cloudStatus.backupOnline ? "সক্রিয় (Online) ✅" : "সংযোগহীন ⚠️";
+            const timeStr = cloudStatus.lastSyncTime ? cloudStatus.lastSyncTime.toLocaleTimeString() : "এখনো সম্পন্ন হয়নি";
+            const msg = currentLang === 'bn'
+                ? `☁️ ক্লাউড সার্ভার স্ট্যাটাস:\n\n1. Supabase ক্লাউড: ${supa}\n2. ব্যাকআপ ক্লাউড (JSON Cloud): ${backup}\n\nসর্বশেষ সিঙ্ক: ${timeStr}\nমোট লিড: ${convertEnToBnNum(leads.length)} টি\n\nযে কোনো নতুন বা পরিবর্তিত তথ্য স্বয়ংক্রিয়ভাবে ক্লাউডে এবং আপনার লোকাল স্টোরেজে সিঙ্ক থাকে।`
+                : `☁️ Cloud Server Status:\n\n1. Supabase Cloud: ${supa}\n2. Backup Cloud: ${backup}\n\nLast Sync: ${timeStr}\nTotal Leads: ${leads.length}\n\nData automatically syncs across all devices.`;
+            alert(msg);
+        }
+
+        function showSyncToast(msg) {
+            const toast = document.getElementById('syncToast');
+            const text = document.getElementById('syncToastMsg');
+            if (!toast || !text) return;
+            text.innerText = msg;
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            setTimeout(() => {
+                closeSyncToast();
+            }, 4000);
+        }
+
+        function closeSyncToast() {
+            const toast = document.getElementById('syncToast');
+            if (toast) {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }
+        }
+
+        function triggerManualSync() {
+            syncWithCloud(true);
+        }
+
+        async function syncWithCloud(isManual = false) {
+            if (cloudStatus.isSyncing) return;
+            cloudStatus.isSyncing = true;
+            updateSyncStatusUI();
+
+            let cloudLeadsList = [];
+            let cloudTagsList = [];
+            let supaSuccess = false;
+            let backupSuccess = false;
+
+            // 1. Fetch from Supabase
+            try {
+                const [supaTags, supaLeads] = await Promise.all([
+                    apiSupabase('tags?select=*'),
+                    apiSupabase('leads?select=*&order=id.desc')
+                ]);
+                if (Array.isArray(supaLeads)) {
+                    supaSuccess = true;
+                    cloudLeadsList = supaLeads.map(l => ({
+                        id: Number(l.id),
+                        role: l.role || 'D',
+                        phone: l.phone || '',
+                        page: l.page || '',
+                        tagId: l.tag_id || '',
+                        note: l.note || '',
+                        status: l.status || 'blue',
+                        createdAt: l.created_at || ''
+                    }));
+                }
+                if (Array.isArray(supaTags)) {
+                    cloudTagsList = supaTags;
+                }
+            } catch (err) {
+                console.warn("Supabase fetch notice:", err.message);
+            }
+
+            // 2. Fetch from Backup Cloud (ExtendsClass JSON Storage)
+            try {
+                const backupData = await apiBackupCloudGet();
+                if (backupData && Array.isArray(backupData.leads)) {
+                    backupSuccess = true;
+                    // If Supabase was unreachable or has fewer records, merge backup leads
+                    const existingIds = new Set(cloudLeadsList.map(l => Number(l.id)));
+                    backupData.leads.forEach(bl => {
+                        const bId = Number(bl.id);
+                        if (!existingIds.has(bId)) {
+                            cloudLeadsList.push(bl);
+                            existingIds.add(bId);
+                        }
+                    });
+                    if (cloudTagsList.length < (backupData.tags || []).length) {
+                        const existingTagIds = new Set(cloudTagsList.map(t => t.id));
+                        (backupData.tags || []).forEach(bt => {
+                            if (!existingTagIds.has(bt.id)) {
+                                cloudTagsList.push(bt);
+                                existingTagIds.add(bt.id);
+                            }
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn("Backup cloud fetch notice:", err.message);
+            }
+
+            cloudStatus.supabaseOnline = supaSuccess;
+            cloudStatus.backupOnline = backupSuccess;
+
+            // 3. Find Unsynced Local Leads (leads on this device not yet in cloud)
+            const cloudIds = new Set(cloudLeadsList.map(l => Number(l.id)));
+            const localLeads = leads || [];
+            const unsyncedLeads = [];
+
+            localLeads.forEach(loc => {
+                const locId = Number(loc.id);
+                if (!cloudIds.has(locId)) {
+                    unsyncedLeads.push(loc);
+                    cloudLeadsList.push(loc);
+                    cloudIds.add(locId);
+                }
+            });
+
+            // 4. AUTOMATIC UPLOAD: Upload any unsynced local leads to Supabase immediately!
+            if (unsyncedLeads.length > 0 && supaSuccess) {
+                console.log(`Auto-uploading ${unsyncedLeads.length} unsynced local leads to Supabase...`);
+                try {
+                    const payloads = unsyncedLeads.map(l => ({
+                        id: Number(l.id),
+                        role: l.role || 'D',
+                        phone: l.phone,
+                        page: l.page || '',
+                        tag_id: l.tagId || '',
+                        note: l.note || '',
+                        status: l.status || 'blue',
+                        created_at: l.createdAt || ''
+                    }));
+                    await apiSupabase('leads', 'POST', payloads);
+                    console.log("Unsynced leads successfully pushed to Supabase!");
+                } catch (e) {
+                    console.warn("Failed pushing unsynced leads to Supabase:", e);
+                }
+            }
+
+            // 5. Merge Tags
+            if (cloudTagsList.length > 0) {
+                const tagMap = new Map();
+                cloudTagsList.forEach(t => tagMap.set(t.id, t));
+                tags.forEach(t => { if (!tagMap.has(t.id)) tagMap.set(t.id, t); });
+                tags = Array.from(tagMap.values());
+            }
+
+            // 6. Update local memory and localStorage
+            if (cloudLeadsList.length > 0) {
+                leads = cloudLeadsList.sort((a, b) => Number(b.id) - Number(a.id));
+            }
+
+            saveLocalData();
+            renderTags();
+            renderLeads();
+            updateChart();
+            updateTargetProgress();
+
+            // 7. Push unified snapshot to Backup Cloud (ExtendsClass)
+            if (supaSuccess || backupSuccess || unsyncedLeads.length > 0) {
+                const backupPayload = {
+                    appName: "Dropshipper Tracker Pro",
+                    lastSync: new Date().toISOString(),
+                    leads: leads,
+                    tags: tags
+                };
+                apiBackupCloudPut(backupPayload).then(ok => {
+                    if (ok) cloudStatus.backupOnline = true;
+                    updateSyncStatusUI();
+                });
+            }
+
+            cloudStatus.isSyncing = false;
+            cloudStatus.lastSyncTime = new Date();
+            updateSyncStatusUI();
+
+            if (isManual) {
+                showSyncToast(currentLang === 'bn' 
+                    ? `✓ ক্লাউড সিঙ্ক সম্পন্ন! মোট ${convertEnToBnNum(leads.length)}টি লিড সফলভাবে সিঙ্ক হয়েছে।` 
+                    : `✓ Cloud sync complete! All ${leads.length} leads are fully up to date.`);
+            }
         }
 
         async function initData() {
-            // 1. Immediately load local data
+            // 1. Instantly load local data so UI opens with 0ms delay
             const local = loadLocalData();
             tags = local.tags;
             leads = local.leads;
@@ -1058,55 +1349,10 @@
             renderLeads();
             updateChart();
             updateTargetProgress();
+            updateSyncStatusUI();
 
-            // 2. Try background Supabase sync
-            if (!_supabase) {
-                setCloudStatus(false);
-                return;
-            }
-
-            try {
-                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 4000));
-
-                const fetchTagsPromise = _supabase.from('tags').select('*');
-                const tagsRes = await Promise.race([fetchTagsPromise, timeoutPromise]);
-                if (!tagsRes.error && tagsRes.data && tagsRes.data.length > 0) {
-                    const cloudTagIds = new Set(tagsRes.data.map(t => t.id));
-                    const localOnlyTags = tags.filter(t => !cloudTagIds.has(t.id));
-                    tags = [...tagsRes.data, ...localOnlyTags];
-                    saveLocalData();
-                    renderTags();
-                }
-
-                const fetchLeadsPromise = _supabase.from('leads').select('*').order('id', { ascending: false });
-                const leadsRes = await Promise.race([fetchLeadsPromise, timeoutPromise]);
-                if (!leadsRes.error && leadsRes.data) {
-                    const cloudLeads = leadsRes.data.map(l => ({
-                        id: l.id,
-                        role: l.role,
-                        phone: l.phone,
-                        page: l.page,
-                        tagId: l.tag_id,
-                        note: l.note,
-                        status: l.status,
-                        createdAt: l.created_at
-                    }));
-
-                    const cloudLeadIds = new Set(cloudLeads.map(l => l.id));
-                    const localOnlyLeads = leads.filter(l => !cloudLeadIds.has(l.id));
-                    leads = [...cloudLeads, ...localOnlyLeads].sort((a, b) => (b.id || 0) - (a.id || 0));
-                    saveLocalData();
-                    renderLeads();
-                    updateChart();
-                    updateTargetProgress();
-                    setCloudStatus(true);
-                } else {
-                    setCloudStatus(false);
-                }
-            } catch (err) {
-                console.warn("Supabase background sync:", err.message);
-                setCloudStatus(false);
-            }
+            // 2. Perform seamless background Dual-Cloud sync
+            await syncWithCloud(false);
         }
 
         // Check for Duplicate Phone Number or Page Link
@@ -1188,6 +1434,7 @@
             renderLeads();
             updateTargetProgress();
             if (chartInstance) updateChart();
+            updateSyncStatusUI();
         }
 
         function toggleLanguage() {
@@ -1256,13 +1503,13 @@
             saveLocalData();
             renderLeads();
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    await _supabase.from('leads').update({ role: target.role }).eq('id', leadId);
-                } catch (e) {
-                    console.warn("Cloud toggle role error:", e);
-                }
-            }
+            apiSupabase(`leads?id=eq.${leadId}`, 'PATCH', { role: target.role }).catch(e => console.warn("Supabase role update error:", e));
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
         }
 
         async function changeStatus(leadId, newStatus) {
@@ -1278,13 +1525,13 @@
             updateTargetProgress();
             closeAllStatusDropdowns();
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    await _supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
-                } catch (e) {
-                    console.warn("Cloud change status error:", e);
-                }
-            }
+            apiSupabase(`leads?id=eq.${leadId}`, 'PATCH', { status: newStatus }).catch(e => console.warn("Supabase status update error:", e));
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
         }
 
         function toggleStatusDropdown(event, id) {
@@ -1312,13 +1559,13 @@
             target.note = newNote;
             saveLocalData();
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    await _supabase.from('leads').update({ note: newNote }).eq('id', leadId);
-                } catch (e) {
-                    console.warn("Cloud update note error:", e);
-                }
-            }
+            apiSupabase(`leads?id=eq.${leadId}`, 'PATCH', { note: newNote }).catch(e => console.warn("Supabase note update error:", e));
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
         }
 
         async function addLead(e) {
@@ -1350,6 +1597,7 @@
                 createdAt: new Date().toLocaleDateString('bn-BD')
             };
 
+            // 1. Instant local persistence and UI render (0ms delay)
             leads.unshift(newLead);
             rememberTag(tagId);
             saveLocalData();
@@ -1363,24 +1611,35 @@
             document.getElementById('tagSelect').value = lastSelectedTagId;
             closeAlert();
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    const dbPayload = {
-                        id: newLead.id,
-                        role: newLead.role,
-                        phone: newLead.phone,
-                        page: newLead.page,
-                        tag_id: newLead.tagId,
-                        note: newLead.note,
-                        status: newLead.status,
-                        created_at: newLead.createdAt
-                    };
-                    const { error } = await _supabase.from('leads').insert([dbPayload]);
-                    if (error) console.warn("Cloud sync error for lead:", error);
-                } catch (e) {
-                    console.warn("Cloud sync failed:", e);
-                }
-            }
+            const dbPayload = {
+                id: newLead.id,
+                role: newLead.role,
+                phone: newLead.phone,
+                page: newLead.page,
+                tag_id: newLead.tagId,
+                note: newLead.note,
+                status: newLead.status,
+                created_at: newLead.createdAt
+            };
+
+            // 2. Direct upload to Supabase
+            apiSupabase('leads', 'POST', [dbPayload]).then(() => {
+                cloudStatus.supabaseOnline = true;
+                updateSyncStatusUI();
+            }).catch(err => {
+                console.warn("Supabase lead upload error:", err);
+            });
+
+            // 3. Direct backup to Backup Cloud (ExtendsClass JSON Storage)
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            }).then(ok => {
+                if (ok) cloudStatus.backupOnline = true;
+                updateSyncStatusUI();
+            });
         }
 
         async function deleteLead(id) {
@@ -1392,13 +1651,13 @@
                 updateChart();
                 updateTargetProgress();
 
-                if (isCloudOnline && _supabase) {
-                    try {
-                        await _supabase.from('leads').delete().eq('id', id);
-                    } catch (e) {
-                        console.warn("Cloud delete lead error:", e);
-                    }
-                }
+                apiSupabase(`leads?id=eq.${id}`, 'DELETE').catch(e => console.warn("Supabase delete error:", e));
+                apiBackupCloudPut({
+                    appName: "Dropshipper Tracker Pro",
+                    lastSync: new Date().toISOString(),
+                    leads: leads,
+                    tags: tags
+                });
             }
         }
 
@@ -1458,20 +1717,23 @@
             updateTargetProgress();
             closeEditModal();
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    await _supabase.from('leads').update({
-                        phone,
-                        page,
-                        tag_id: tagId,
-                        role,
-                        status,
-                        note
-                    }).eq('id', id);
-                } catch (e) {
-                    console.warn("Cloud update lead error:", e);
-                }
-            }
+            // Send update to Supabase
+            apiSupabase(`leads?id=eq.${id}`, 'PATCH', {
+                phone,
+                page,
+                tag_id: tagId,
+                role,
+                status,
+                note
+            }).catch(e => console.warn("Supabase lead edit notice:", e));
+
+            // Sync to Backup Cloud
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads,
+                tags
+            });
         }
 
         function toggleTagModal() {
@@ -1493,14 +1755,13 @@
             renderTags();
             document.getElementById('newTagName').value = '';
 
-            if (isCloudOnline && _supabase) {
-                try {
-                    const { error } = await _supabase.from('tags').insert([newTag]);
-                    if (error) console.warn("Cloud tag sync error:", error);
-                } catch (e) {
-                    console.warn("Cloud tag sync failed:", e);
-                }
-            }
+            apiSupabase('tags', 'POST', [newTag]).catch(e => console.warn("Supabase tag add notice:", e));
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads,
+                tags
+            });
         }
 
         async function deleteTag(id) {
@@ -1517,13 +1778,13 @@
                 saveLocalData();
                 renderTags();
 
-                if (isCloudOnline && _supabase) {
-                    try {
-                        await _supabase.from('tags').delete().eq('id', id);
-                    } catch (e) {
-                        console.warn("Cloud delete tag error:", e);
-                    }
-                }
+                apiSupabase(`tags?id=eq.${id}`, 'DELETE').catch(e => console.warn("Supabase tag delete notice:", e));
+                apiBackupCloudPut({
+                    appName: "Dropshipper Tracker Pro",
+                    lastSync: new Date().toISOString(),
+                    leads,
+                    tags
+                });
             }
         }
 
@@ -1734,6 +1995,14 @@
         applyTheme();
         applyLanguage();
         initData();
+
+        // Background Auto-Sync Event Listeners
+        window.addEventListener('focus', () => syncWithCloud(false));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) syncWithCloud(false);
+        });
+        window.addEventListener('online', () => syncWithCloud(false));
+        setInterval(() => syncWithCloud(false), 30000); // Auto-sync every 30 seconds
     </script>
 </body>
 </html>
