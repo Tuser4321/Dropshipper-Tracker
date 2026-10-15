@@ -536,7 +536,8 @@
             theme: 'rb_tracker_theme',
             lastTag: 'rb_last_selected_tag',
             targetSettings: 'dropshipper_target_settings',
-            dailyActivities: 'dropshipper_daily_activities'
+            dailyActivities: 'dropshipper_daily_activities',
+            calledLeads: 'dropshipper_called_leads'
         };
 
         // PWA Service Worker Registration
@@ -675,7 +676,7 @@
                 thRole: "ভূমিকা",
                 thPhone: "ফোন নম্বর",
                 thStatus: "স্ট্যাটাস",
-                thWhatsApp: "হোয়াটসঅ্যাপ অ্যাকশন",
+                thWhatsApp: "কল ও হোয়াটসঅ্যাপ",
                 thPlatform: "সোশ্যাল / সাইট লিংক",
                 thTag: "প্রোডাক্ট ট্যাগ",
                 thNote: "ফলো-আপ নোট",
@@ -733,7 +734,7 @@
                 thRole: "Role",
                 thPhone: "Phone Number",
                 thStatus: "Status",
-                thWhatsApp: "WhatsApp Action",
+                thWhatsApp: "Call & WhatsApp",
                 thPlatform: "Social / Site Link",
                 thTag: "Product Tag",
                 thNote: "Follow-up Note",
@@ -801,6 +802,7 @@
             localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(settings));
             toggleTargetModal();
             updateTargetProgress();
+            syncSettingsToCloud();
         }
 
         function toggleTargetModal() {
@@ -855,6 +857,7 @@
                 activities[todayKey].contactedLeadIds.push(strId);
                 localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(activities));
                 updateTargetProgress();
+                syncSettingsToCloud();
             }
         }
 
@@ -897,6 +900,76 @@
                 isContactsMet,
                 isOverallMet
             };
+        }
+
+        // ─── Called Leads State (persisted + synced) ───────────────────────
+        let calledLeadIds = new Set();
+
+        function getCalledLeadIds() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.calledLeads);
+                if (raw) return new Set(JSON.parse(raw));
+            } catch (e) {}
+            return new Set();
+        }
+
+        function saveCalledLeadIds() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.calledLeads, JSON.stringify([...calledLeadIds]));
+            } catch (e) {}
+        }
+
+        function triggerCall(leadId, phone) {
+            let cleaned = phone.replace(/\D/g, '');
+            if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
+            else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
+
+            // Toggle call color state (but NEVER change lead status)
+            const numId = Number(leadId);
+            if (calledLeadIds.has(numId)) {
+                calledLeadIds.delete(numId);
+            } else {
+                calledLeadIds.add(numId);
+                window.location.href = 'tel:+' + cleaned;
+            }
+            saveCalledLeadIds();
+            renderLeads();
+            syncSettingsToCloud();
+        }
+
+        // ─── Sync target settings + daily activities + calledLeads to cloud ─
+        async function syncSettingsToCloud() {
+            try {
+                const targetSettings = getTargetSettings();
+                const dailyActivities = getDailyActivities();
+                const calledArr = [...calledLeadIds];
+                const payload = JSON.stringify({
+                    targetSettings,
+                    dailyActivities,
+                    calledLeadIds: calledArr,
+                    updatedAt: new Date().toISOString()
+                });
+
+                // Save to Supabase tags table as sys_settings record
+                const existing = await apiSupabase('tags?id=eq.sys_settings&select=id').catch(() => null);
+                if (Array.isArray(existing) && existing.length > 0) {
+                    await apiSupabase('tags?id=eq.sys_settings', 'PATCH', { name: payload }).catch(() => {});
+                } else {
+                    await apiSupabase('tags', 'POST', [{ id: 'sys_settings', name: payload }]).catch(() => {});
+                }
+
+                // Also save to backup cloud as top-level properties
+                const backupData = await apiBackupCloudGet().catch(() => null);
+                if (backupData) {
+                    backupData.targetSettings = targetSettings;
+                    backupData.dailyActivities = dailyActivities;
+                    backupData.calledLeadIds = calledArr;
+                    backupData.lastSync = new Date().toISOString();
+                    apiBackupCloudPut(backupData).catch(() => {});
+                }
+            } catch (e) {
+                console.warn('syncSettingsToCloud error:', e);
+            }
         }
 
         function updateTargetProgress() {
@@ -1224,7 +1297,43 @@
                     }));
                 }
                 if (Array.isArray(supaTags)) {
-                    cloudTagsList = supaTags;
+                    // Extract sys_settings from tags BEFORE adding to cloudTagsList
+                    const sysSettingsTag = supaTags.find(t => t.id === 'sys_settings');
+                    if (sysSettingsTag) {
+                        try {
+                            const parsed = JSON.parse(sysSettingsTag.name);
+                            // Apply targetSettings
+                            if (parsed.targetSettings) {
+                                localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(parsed.targetSettings));
+                            }
+                            // Merge dailyActivities (cloud wins for past, merge today's)
+                            if (parsed.dailyActivities) {
+                                const localAct = getDailyActivities();
+                                const todayKey = getLocalDateKey();
+                                const merged = { ...parsed.dailyActivities };
+                                // Merge today's local contacts with cloud
+                                if (localAct[todayKey] && merged[todayKey]) {
+                                    const combined = new Set([
+                                        ...(merged[todayKey].contactedLeadIds || []),
+                                        ...(localAct[todayKey].contactedLeadIds || [])
+                                    ]);
+                                    merged[todayKey].contactedLeadIds = [...combined];
+                                } else if (localAct[todayKey]) {
+                                    merged[todayKey] = localAct[todayKey];
+                                }
+                                localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(merged));
+                            }
+                            // Merge calledLeadIds
+                            if (Array.isArray(parsed.calledLeadIds)) {
+                                parsed.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
+                                saveCalledLeadIds();
+                            }
+                        } catch (pe) {
+                            console.warn('sys_settings parse error:', pe);
+                        }
+                    }
+                    // Only add real (non-sys_) tags to cloudTagsList
+                    cloudTagsList = supaTags.filter(t => !String(t.id).startsWith('sys_'));
                 }
             } catch (err) {
                 console.warn("Supabase fetch notice:", err.message);
@@ -1246,12 +1355,37 @@
                     });
                     if (cloudTagsList.length < (backupData.tags || []).length) {
                         const existingTagIds = new Set(cloudTagsList.map(t => t.id));
-                        (backupData.tags || []).forEach(bt => {
+                        (backupData.tags || []).filter(t => !String(t.id).startsWith('sys_')).forEach(bt => {
                             if (!existingTagIds.has(bt.id)) {
                                 cloudTagsList.push(bt);
                                 existingTagIds.add(bt.id);
                             }
                         });
+                    }
+                    // Apply settings from backup cloud if not already applied from Supabase
+                    if (!supaSuccess) {
+                        if (backupData.targetSettings) {
+                            localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(backupData.targetSettings));
+                        }
+                        if (backupData.dailyActivities) {
+                            const localAct = getDailyActivities();
+                            const todayKey = getLocalDateKey();
+                            const merged = { ...backupData.dailyActivities };
+                            if (localAct[todayKey] && merged[todayKey]) {
+                                const combined = new Set([
+                                    ...(merged[todayKey].contactedLeadIds || []),
+                                    ...(localAct[todayKey].contactedLeadIds || [])
+                                ]);
+                                merged[todayKey].contactedLeadIds = [...combined];
+                            } else if (localAct[todayKey]) {
+                                merged[todayKey] = localAct[todayKey];
+                            }
+                            localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(merged));
+                        }
+                        if (Array.isArray(backupData.calledLeadIds)) {
+                            backupData.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
+                            saveCalledLeadIds();
+                        }
                     }
                 }
             } catch (err) {
@@ -1296,12 +1430,12 @@
                 }
             }
 
-            // 5. Merge Tags
+            // 5. Merge Tags (only real tags, never sys_ entries)
             if (cloudTagsList.length > 0) {
                 const tagMap = new Map();
                 cloudTagsList.forEach(t => tagMap.set(t.id, t));
-                tags.forEach(t => { if (!tagMap.has(t.id)) tagMap.set(t.id, t); });
-                tags = Array.from(tagMap.values());
+                tags.filter(t => !String(t.id).startsWith('sys_')).forEach(t => { if (!tagMap.has(t.id)) tagMap.set(t.id, t); });
+                tags = Array.from(tagMap.values()).filter(t => !String(t.id).startsWith('sys_'));
             }
 
             // 6. Update local memory and localStorage
@@ -1321,7 +1455,10 @@
                     appName: "Dropshipper Tracker Pro",
                     lastSync: new Date().toISOString(),
                     leads: leads,
-                    tags: tags
+                    tags: tags,
+                    targetSettings: getTargetSettings(),
+                    dailyActivities: getDailyActivities(),
+                    calledLeadIds: [...calledLeadIds]
                 };
                 apiBackupCloudPut(backupPayload).then(ok => {
                     if (ok) cloudStatus.backupOnline = true;
@@ -1335,7 +1472,7 @@
 
             if (isManual) {
                 showSyncToast(currentLang === 'bn' 
-                    ? `✓ ক্লাউড সিঙ্ক সম্পন্ন! মোট ${convertEnToBnNum(leads.length)}টি লিড সফলভাবে সিঙ্ক হয়েছে।` 
+                    ? `✓ ক্লাউড সিঙ্ক সম্পন্ন! মোট ${convertEnToBnNum(leads.length)}টি লিড সফলভাবে সিঙ্ক হয়েছে।` 
                     : `✓ Cloud sync complete! All ${leads.length} leads are fully up to date.`);
             }
         }
@@ -1345,6 +1482,7 @@
             const local = loadLocalData();
             tags = local.tags;
             leads = local.leads;
+            calledLeadIds = getCalledLeadIds();
             renderTags();
             renderLeads();
             updateChart();
@@ -1673,7 +1811,7 @@
             document.getElementById('editNoteInput').value = lead.note || '';
 
             const editTagSelect = document.getElementById('editTagSelect');
-            editTagSelect.innerHTML = tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
+            editTagSelect.innerHTML = tags.filter(t => !String(t.id).startsWith('sys_')).map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
             editTagSelect.value = lead.tagId;
 
             const modal = document.getElementById('editLeadModal');
@@ -1793,17 +1931,19 @@
             const filterEl = document.getElementById('filterTag');
             const listEl = document.getElementById('tagList');
 
-            selectEl.innerHTML = tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
-            filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + tags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
+            const realTags = tags.filter(t => !String(t.id).startsWith('sys_'));
 
-            if (lastSelectedTagId && tags.some(t => t.id === lastSelectedTagId)) {
+            selectEl.innerHTML = realTags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
+            filterEl.innerHTML = `<option value="ALL">${translations[currentLang].filterAllTags}</option>` + realTags.map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
+
+            if (lastSelectedTagId && realTags.some(t => t.id === lastSelectedTagId)) {
                 selectEl.value = lastSelectedTagId;
-            } else if (tags.length > 0) {
-                rememberTag(tags[0].id);
-                selectEl.value = tags[0].id;
+            } else if (realTags.length > 0) {
+                rememberTag(realTags[0].id);
+                selectEl.value = realTags[0].id;
             }
 
-            listEl.innerHTML = tags.map(t => {
+            listEl.innerHTML = realTags.map(t => {
                 const colorClass = getTagColor(t.id);
                 return `
                     <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border dark:border-slate-600 text-xs">
@@ -1882,10 +2022,23 @@
                         </td>
 
                         <td class="p-3">
-                            <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" 
-                                    class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm transition">
-                               <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
-                            </button>
+                            <div class="flex items-center gap-1.5">
+                                ${(() => {
+                                    const isCalled = calledLeadIds.has(Number(l.id));
+                                    const callClass = isCalled
+                                        ? 'bg-sky-500 hover:bg-sky-600 text-white border-sky-600 shadow-sky-500/25 shadow-sm'
+                                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600';
+                                    return `<button onclick="triggerCall(${l.id}, '${l.phone}')" 
+                                        title="${isCalled ? (currentLang === 'bn' ? 'কল করা হয়েছে (আবার ক্লিক করলে রিসেট)' : 'Called (click to reset)') : (currentLang === 'bn' ? 'কল করুন' : 'Call')}"
+                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-xs border transition ${callClass}">
+                                        <i class="fa-solid fa-phone text-[10px]"></i>
+                                    </button>`;
+                                })()}
+                                <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" 
+                                        class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm transition">
+                                   <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                                </button>
+                            </div>
                         </td>
 
                         <td class="p-3 text-xs whitespace-nowrap">
