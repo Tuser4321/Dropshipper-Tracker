@@ -57,11 +57,7 @@
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
-                                <button onclick="toggleAudienceStrategyModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1.5 active:scale-95" title="টার্গেট অডিয়েন্স স্ট্র্যাটেজি ও পিচিং গাইড">
-                    <i class="fa-solid fa-bullseye"></i> <span data-i18n="targetStrategy">টার্গেট স্ট্র্যাটেজি</span>
-                </button>
-
-                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
+                                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
                     <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
                     <span data-i18n="btnSync">সিঙ্ক করুন</span>
                 </button>
@@ -203,7 +199,7 @@
         <!-- Add Lead Form Section -->
         <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
             <h2 class="text-sm font-semibold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-                <i class="fa-solid fa-user-plus text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="addLeadHeader">নতুন লিড যুক্ত করুন</span>
+                <i class="fa-solid fa-user-plus text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="addLeadHeader">নতুন লিড</span>
             </h2>
             <form id="leadForm" onsubmit="addLead(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div>
@@ -225,7 +221,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblNote">ফলো-আপ নোট / মন্তব্য</label>
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblNote">নোট</label>
                     <input type="text" id="noteInput" placeholder="যেমন: ক্যাটালগ পাঠানো হয়েছে" 
                            class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
                 </div>
@@ -240,28 +236,35 @@
         <!-- Leads Table Section -->
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-3 bg-slate-50/50 dark:bg-slate-800/80">
-                <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs" data-i18n="tableHeader">সকল সংগৃহীত লিড ও ফলো-আপ হিস্ট্রি</span>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-slate-800 dark:text-slate-100 text-xs tracking-wide" data-i18n="tableHeader">লিড ও ফলো-আপ</span>
+                    <!-- Central Call Script Prompter Trigger Button -->
+                    <button id="prompterToggleBtn" onclick="togglePrompter(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition active:scale-95" title="কোল্ড কল স্ক্রিপ্ট ও অটো-স্ক্রোল প্রম্পটার">
+                        <i class="fa-solid fa-microphone-lines text-xs"></i>
+                        <span data-i18n="btnPrompter">কল স্ক্রিপ্ট প্রম্পটার</span>
+                    </button>
+                </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <select id="filterTag" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
+                    <select id="filterTag" onchange="onFilterChange()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
                         <option value="ALL" data-i18n="filterAllTags">সকল ট্যাগ</option>
                     </select>
-                    <select id="filterRole" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
-                        <option value="ALL" data-i18n="filterAllRoles">সকল ভূমিকা (D & S)</option>
-                        <option value="D">শুধুমাত্র Dropshipper (D)</option>
-                        <option value="S">শুধুমাত্র Supplier (S)</option>
+                    <select id="filterRole" onchange="onFilterChange()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
+                        <option value="ALL" data-i18n="filterAllRoles">সকল ভূমিকা</option>
+                        <option value="D">Dropshipper (D)</option>
+                        <option value="S">Supplier (S)</option>
                     </select>
-                    <select id="filterFollowup" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
-                        <option value="ALL">সকল ফলো-আপ অবস্থা</option>
+                    <select id="filterFollowup" onchange="onFilterChange()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
+                        <option value="ALL">সকল ফলো-আপ</option>
                         <option value="phone_off">📵 ফোন বন্ধ</option>
                         <option value="no_answer">🔕 ফোন ধরে নাই</option>
-                        <option value="call_later">⏳ পরে কথা বলবে / ব্যস্ত</option>
-                        <option value="wa_sent">💬 মেসেজ পাঠিয়েছি</option>
+                        <option value="call_later">⏳ পরে কথা বলবে</option>
+                        <option value="wa_sent">💬 মেসেজ দেওয়া হয়েছে</option>
                         <option value="interested">🤝 আগ্রহী</option>
                         <option value="not_interested">❌ আগ্রহী নয়</option>
-                        <option value="has_callback">⏰ শিডিউল করা আছে</option>
+                        <option value="has_callback">⏰ কল শিডিউল</option>
                         <option value="today_callback">⚠️ আজকের শিডিউল</option>
                     </select>
-                    <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center gap-1.5 transition shadow-2xs">
+                    <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs">
                         <i id="viewToggleIcon" class="fa-solid fa-table-cells"></i>
                         <span id="viewToggleText">কার্ড ভিউ</span>
                     </button>
@@ -290,6 +293,21 @@
             </div>
             <!-- Responsive Mobile/Tablet Cards Container -->
             <div id="leadCardsContainer" class="hidden p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <!-- Pagination Controls Bar -->
+            <div id="paginationBar" class="p-3 border-t border-slate-100 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <span data-i18n="perPage">প্রতি পেজে:</span>
+                    <select id="pageSizeSelect" onchange="setPageSize(this.value)" class="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="ALL">সকল (All)</option>
+                    </select>
+                    <span id="paginationInfo" class="ml-2 font-medium text-slate-700 dark:text-slate-200 font-mono text-[11px]"></span>
+                </div>
+                <div id="paginationButtons" class="flex items-center gap-1"></div>
+            </div>
         </div>
 
     </div>
@@ -833,7 +851,12 @@
             dailyActivities: 'dropshipper_daily_activities',
             calledLeads: 'dropshipper_called_leads',
             leadFollowups: 'dropshipper_lead_followups',
-            viewMode: 'dropshipper_view_mode'
+            viewMode: 'dropshipper_view_mode',
+            pageSize: 'dropshipper_page_size',
+            prompterSpeed: 'dropshipper_prompter_speed',
+            prompterFontSize: 'dropshipper_prompter_font_size',
+            defaultScriptId: 'dropshipper_default_script_id',
+            customScripts: 'dropshipper_custom_scripts'
         };
 
         // PWA Service Worker Registration
@@ -953,118 +976,128 @@
             bn: {
                 cloudStatus: "Supabase ক্লাউড সক্রিয়",
                 cloudStatusOnline: "Supabase ক্লাউড সক্রিয়",
-                cloudStatusOffline: "অফলাইন মোড (লোকাল সেভ)",
+                cloudStatusOffline: "অফলাইন মোড",
                 tagSettings: "ট্যাগ সেটিংস",
                 exportCSV: "CSV ডাউনলোড",
                 statTotal: "মোট লিড",
                 statNew: "নতুন লিড",
-                statContacted: "যোগাযোগকৃত",
+                statContacted: "কন্টাক্টকৃত",
                 statConverted: "সফল লিড",
-                addLeadHeader: "নতুন লিড যুক্ত করুন",
+                addLeadHeader: "নতুন লিড",
                 lblPhone: "ফোন নম্বর *",
-                lblPage: "পেজ বা ওয়েবসাইট লিংক",
-                lblTag: "প্রোডাক্ট ট্যাগ",
-                lblNote: "ফলো-আপ নোট / মন্তব্য",
+                lblPage: "ওয়েবসাইট / পেজ লিংক",
+                lblTag: "ক্যাটাগরি / ট্যাগ",
+                lblNote: "নোট",
                 btnAddLead: "সেভ করুন",
-                tableHeader: "সকল সংগৃহীত লিড ও ফলো-আপ হিস্ট্রি",
+                tableHeader: "লিড ও ফলো-আপ",
                 filterAllTags: "সকল ট্যাগ",
-                filterAllRoles: "সকল ভূমিকা (D & S)",
+                filterAllRoles: "সকল ভূমিকা",
                 thRole: "ভূমিকা",
-                thPhone: "ফোন নম্বর",
+                thPhone: "ফোন",
                 thStatus: "স্ট্যাটাস",
-                thWhatsApp: "কল ও হোয়াটসঅ্যাপ",
-                thPlatform: "সোশ্যাল / সাইট লিংক",
-                thTag: "প্রোডাক্ট ট্যাগ",
-                thNote: "ফলো-আপ নোট",
-                thAction: "কার্যক্রম",
-                modalTagTitle: "প্রোডাক্ট ট্যাগ সেটিংস",
+                thWhatsApp: "কল ও WhatsApp",
+                thPlatform: "সাইট লিংক",
+                thTag: "ক্যাটাগরি",
+                thNote: "নোট ও শিডিউল",
+                thAction: "অ্যাকশন",
+                modalTagTitle: "ট্যাগ সেটিংস",
                 lblNewTag: "নতুন ট্যাগের নাম *",
-                btnAddNewTag: "নতুন ট্যাগ যোগ করুন",
+                btnAddNewTag: "ট্যাগ যোগ করুন",
                 existingTags: "বিদ্যমান ট্যাগসমূহ:",
-                modalEditTitle: "লিড তথ্য পরিবর্তন (Edit Lead)",
-                lblRole: "ভূমিকা / রোল",
+                modalEditTitle: "লিড এডিট",
+                lblRole: "ভূমিকা",
                 lblStatus: "স্ট্যাটাস",
                 stNew: "নতুন",
                 stContacted: "যোগাযোগকৃত",
-                stConverted: "সফল লিড",
-                stCancelled: "অনগ্রহী / বাতিল",
+                stConverted: "সফল",
+                stCancelled: "বাতিল / আগ্রহী নয়",
                 btnCancel: "বাতিল",
-                btnSaveEdit: "পরিবর্তন সেভ করুন",
+                btnSaveEdit: "সেভ করুন",
                 noData: "কোনো তথ্য পাওয়া যায়নি",
-                clickToChange: "ক্লিক করে পরিবর্তন করুন",
+                clickToChange: "পরিবর্তন করতে ক্লিক করুন",
                 installApp: "অ্যাপ ইনস্টল",
-                dailyTargetTitle: "দৈনিক টার্গেট ও পারফরম্যান্স",
+                dailyTargetTitle: "টার্গেট ও পারফরম্যান্স",
                 btnSetTarget: "টার্গেট পরিবর্তন",
-                btnViewHistory: "হিস্ট্রি দেখুন",
-                leadsTargetLabel: "আজকের লিড সংগ্রহ",
-                contactsTargetLabel: "আজকের কন্টাক্ট / ফলো-আপ",
-                modalTargetTitle: "ডেইলি টার্গেট সেটিংস",
-                lblDailyLeadsTarget: "প্রতিদিনের লিড টার্গেট *",
-                lblDailyContactsTarget: "প্রতিদিনের কন্টাক্ট / মেসেজ টার্গেট *",
-                btnSaveTarget: "টার্গেট সেভ করুন",
-                modalHistoryTitle: "পূর্বের টার্গেট ও পারফরম্যান্স হিস্ট্রি",
+                btnViewHistory: "হিস্ট্রি",
+                leadsTargetLabel: "লিড সংগ্রহ",
+                contactsTargetLabel: "কন্টাক্ট ও ফলো-আপ",
+                modalTargetTitle: "টার্গেট সেটিংস",
+                lblDailyLeadsTarget: "দৈনিক লিড টার্গেট *",
+                lblDailyContactsTarget: "দৈনিক কন্টাক্ট / অ্যাকশন টার্গেট *",
+                btnSaveTarget: "সেভ করুন",
+                modalHistoryTitle: "টার্গেট হিস্ট্রি",
                 btnClose: "বন্ধ করুন",
-                statusCompleted: "লক্ষ্য পূরণ ✅",
+                statusCompleted: "টার্গেট পূরণ ✅",
                 statusIncomplete: "অসম্পূর্ণ ⚠️",
-                btnSync: "সিঙ্ক করুন", targetStrategy: "টার্গেট স্ট্র্যাটেজি"
+                btnSync: "সিঙ্ক করুন",
+                btnPrompter: "কল স্ক্রিপ্ট প্রম্পটার",
+                prompterTitle: "কল স্ক্রিপ্ট প্রম্পটার",
+                perPage: "প্রতি পেজে:",
+                prev: "পূর্ববর্তী",
+                next: "পরবর্তী"
             },
             en: {
                 cloudStatus: "Supabase Cloud Active",
                 cloudStatusOnline: "Supabase Cloud Active",
-                cloudStatusOffline: "Offline Mode (Local Save)",
+                cloudStatusOffline: "Offline Mode",
                 tagSettings: "Tag Settings",
                 exportCSV: "Download CSV",
                 statTotal: "Total Leads",
                 statNew: "New Leads",
                 statContacted: "Contacted",
                 statConverted: "Converted",
-                addLeadHeader: "Add New Lead",
+                addLeadHeader: "Add Lead",
                 lblPhone: "Phone Number *",
-                lblPage: "Page or Website Link",
-                lblTag: "Product Tag",
-                lblNote: "Follow-up Note / Comment",
+                lblPage: "Website / Page Link",
+                lblTag: "Category / Tag",
+                lblNote: "Note",
                 btnAddLead: "Save Lead",
-                tableHeader: "All Leads & Follow-up History",
+                tableHeader: "Leads & Follow-up",
                 filterAllTags: "All Tags",
-                filterAllRoles: "All Roles (D & S)",
+                filterAllRoles: "All Roles",
                 thRole: "Role",
-                thPhone: "Phone Number",
+                thPhone: "Phone",
                 thStatus: "Status",
                 thWhatsApp: "Call & WhatsApp",
-                thPlatform: "Social / Site Link",
-                thTag: "Product Tag",
-                thNote: "Follow-up Note",
+                thPlatform: "Site Link",
+                thTag: "Category",
+                thNote: "Notes & Schedule",
                 thAction: "Actions",
-                modalTagTitle: "Product Tag Settings",
+                modalTagTitle: "Tag Settings",
                 lblNewTag: "New Tag Name *",
-                btnAddNewTag: "Add New Tag",
+                btnAddNewTag: "Add Tag",
                 existingTags: "Existing Tags:",
-                modalEditTitle: "Edit Lead Information",
-                lblRole: "User Role",
+                modalEditTitle: "Edit Lead",
+                lblRole: "Role",
                 lblStatus: "Status",
                 stNew: "New",
                 stContacted: "Contacted",
                 stConverted: "Converted",
-                stCancelled: "Uninterested / Cancelled",
+                stCancelled: "Cancelled / Uninterested",
                 btnCancel: "Cancel",
-                btnSaveEdit: "Save Changes",
+                btnSaveEdit: "Save",
                 noData: "No data available",
                 clickToChange: "Click to change",
                 installApp: "Install App",
-                dailyTargetTitle: "Daily Target & Performance",
+                dailyTargetTitle: "Target & Performance",
                 btnSetTarget: "Change Target",
-                btnViewHistory: "View History",
-                leadsTargetLabel: "Today's Leads Collected",
-                contactsTargetLabel: "Today's Contacts / Outreach",
-                modalTargetTitle: "Daily Target Settings",
+                btnViewHistory: "History",
+                leadsTargetLabel: "Leads Collected",
+                contactsTargetLabel: "Contacts & Actions",
+                modalTargetTitle: "Target Settings",
                 lblDailyLeadsTarget: "Daily Leads Target *",
-                lblDailyContactsTarget: "Daily Contacts Target *",
+                lblDailyContactsTarget: "Daily Contacts / Actions Target *",
                 btnSaveTarget: "Save Target",
-                modalHistoryTitle: "Past Target & Performance History",
+                modalHistoryTitle: "Target History",
                 btnClose: "Close",
                 statusCompleted: "Target Met ✅",
                 statusIncomplete: "Incomplete ⚠️",
-                btnSync: "Sync Now", targetStrategy: "Target Strategy"
+                btnSync: "Sync Now",
+                btnPrompter: "Call Script Prompter",
+                prompterTitle: "Call Script Prompter",
+                perPage: "Per page:",
+                prev: "Previous",
+                next: "Next"
             }
         };
 
@@ -1170,14 +1203,17 @@
 
             const leadsCount = leadsOnDate.length;
 
-            // Count contacts made on this date
-            const contactedSet = new Set(dayActivity.contactedLeadIds ? dayActivity.contactedLeadIds.map(String) : []);
+            // Count ALL outreach/follow-up actions taken on this date
+            const actionSet = new Set(dayActivity.contactedLeadIds ? dayActivity.contactedLeadIds.map(String) : []);
+            
+            // Also include leads that had status or activity updates
             leadsOnDate.forEach(l => {
-                if (l.status === 'yellow' || l.status === 'green') {
-                    contactedSet.add(String(l.id));
+                if (l.status && l.status !== 'blue') {
+                    actionSet.add(String(l.id));
                 }
             });
-            const contactedCount = contactedSet.size;
+
+            const contactedCount = actionSet.size;
 
             const leadsTarget = dayActivity.leadsTarget || settings.dailyLeads;
             const contactsTarget = dayActivity.contactsTarget || settings.dailyContacts;
@@ -1498,6 +1534,7 @@
         }
 
         function setLeadQuickTag(leadId, tagKey) {
+            recordContactActivity(leadId);
             const numId = Number(leadId);
             if (!leadFollowups[numId]) leadFollowups[numId] = {};
             leadFollowups[numId].quickTag = (tagKey === 'clear' ? '' : tagKey);
@@ -1556,6 +1593,368 @@
             }
         }
 
+        // ─── Cold Call Teleprompter Engine & Script Library ───────────────
+        const DEFAULT_CALL_SCRIPTS = {
+            perf_marketer: {
+                id: 'perf_marketer',
+                titleBn: '🎯 স্বাধীন পারফরম্যান্স মার্কেটার / মিডিয়া বায়ার',
+                titleEn: '🎯 Performance Marketers / Media Buyers',
+                text: `[শুরু - কুশল বিনিময়]
+"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে তুসার বলছি। আপনার কি ২ মিনিট কথা বলার সময় হবে?"
+
+[হুক / সমস্যা সনাক্তকরণ]
+"আপনার অ্যাডভার্টাইজিং এবং মিডিয়া বায়িং ক্যাম্পেইনের পারফরম্যান্স বেশ ভালো দেখছি। আমরা মার্কেটারদের সাথে কথা বলে যেটা দেখেছি—মার্কেটারদের সবচেয়ে বড় সমস্যা হলো ক্লায়েন্টদের নিজস্ব প্রোডাক্ট সোর্সিং বা ডেলিভারির অবকাঠামো থাকে না। যার ফলে অ্যাড ভালো চললেও সাপ্লাই সমস্যার কারণে অনেক ক্লায়েন্ট ড্রপ আউট হয়ে যায়।"
+
+[আমাদের ভ্যালু অফার]
+"আমাদের প্ল্যাটফর্মে আপনি ভেরিফায়েড ড্রপশিপার ও নির্ভরযোগ্য সাপ্লায়ার নেটওয়ার্কের ডিরেক্ট সাপোর্ট পাচ্ছেন। অর্থাৎ ক্লায়েন্টের স্টক আউটের কোনো ঝুঁকি নেই। আপনি ক্লায়েন্টদের উইনিং প্রোডাক্ট দিতে পারবেন আর নিশ্চিন্তে অ্যাড স্কেল করতে পারবেন।"
+
+[কল টু অ্যাকশন / পরবর্তী পদক্ষেপ]
+"আপনার কি এমন কোনো রানিং ক্লায়েন্ট আছে যাদের জন্য নির্ভরযোগ্য প্রোডাক্ট সাপোর্ট দরকার? তাহলে আমরা তাদের সরাসরি কানেক্ট করে দিতে পারি।"`
+            },
+            agency: {
+                id: 'agency',
+                titleBn: '🏢 ডিজিটাল মার্কেটিং এজেন্সি',
+                titleEn: '🏢 Digital Marketing Agencies',
+                text: `[শুরু]
+"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি। এজেন্সির বর্তমান ই-কমার্স প্রজেক্ট নিয়ে কি ১ মিনিট কথা বলা যাবে?"
+
+[মূল বিষয়বস্তু]
+"আমরা জানি একটা মার্কেটিং এজেন্সির জন্য ক্লায়েন্টদের ফুল-স্ট্যাক ই-কমার্স সুবিধা দেওয়া এখন অত্যন্ত জরুরি। অনেক এজেন্সিরই ড্রপশিপার ক্লায়েন্ট আছে যারা প্রোডাক্ট সোর্সিং ও ডেলিভারি জটিলতায় সঠিক সময়ে অর্ডার কমপ্লিট করতে পারে না।"
+
+[অফার]
+"আমাদের এজেন্সি পার্টনারশিপ প্রোগ্রামের আওতায় আপনি আপনার ক্লায়েন্টদের কমপ্লিট ড্রপশিপিং ট্র্যাকিং ও ভেরিফায়েড সাপ্লাই চেইন সলিউশন দিতে পারবেন কোনো নিজস্ব ইনভেন্টরি ছাড়াই।"
+
+[ক্লোজিং]
+"আমরা কি আপনার এজেন্সির সাথে একটা ছোট পার্টনারশিপ কল শিডিউল করতে পারি?"`
+            },
+            shopify_dev: {
+                id: 'shopify_dev',
+                titleBn: '🛍️ Shopify / WooCommerce ডেভেলপার',
+                titleEn: '🛍️ Shopify / WooCommerce Developers',
+                text: `[শুরু]
+"আসসালামু আলাইকুম ভাইয়া, Shopify এবং ই-কমার্স স্টোর ডেভেলপমেন্টে আপনার কাজ বেশ চমৎকার। আমি ড্রপশিপার ট্র্যাকার থেকে বলছি।"
+
+[সমস্যা]
+"স্টোর ডিজাইন ও ডেভেলপমেন্টের পরই ক্লায়েন্টদের সবচেয়ে বড় চ্যালেঞ্জ তৈরি হয়—তারা নির্ভরযোগ্য প্রোডাক্ট কোথায় পাবে এবং অর্ডার কীভাবে ট্র্যাক করবে।"
+
+[অফার]
+"আমাদের ট্র্যাকিং প্ল্যাটফর্ম ও প্রোডাক্ট নেটওয়ার্ক আপনার তৈরি করা স্টোরের ক্লায়েন্টদের জন্য সরাসরি কানেক্ট করা সম্ভব। এতে আপনার ক্লায়েন্টরা স্টোর ডেলিভারির পরই রেডি প্রোডাক্ট নিয়ে কাজ শুরু করতে পারবে।"
+
+[পরবর্তী পদক্ষেপ]
+"আপনার কি বর্তমানে কোনো সক্রিয় ই-কমার্স ক্লায়েন্ট আছে যাদের প্রোডাক্ট সাপোর্ট প্রয়োজন?"`
+            },
+            automation: {
+                id: 'automation',
+                titleBn: '⚡ API ও অটোমেশন বিশেষজ্ঞ',
+                titleEn: '⚡ API & Automation Specialists',
+                text: `[শুরু]
+"আসসালামু আলাইকুম ভাইয়া, ই-কমার্স ও কুরিয়ার অটোমেশন নিয়ে আপনার কাজের প্রশংসা করি। ২ মিনিট কথা বলার সময় হবে কি?"
+
+[অফার]
+"আমাদের ড্রপশিপার ট্র্যাকিং সিস্টেমে রিয়েল-টাইম লিড, অর্ডার ও অটোমেশন ইন্টিগ্রেশন রয়েছে। আপনি আপনার ক্লায়েন্টদের ড্রপশিপিং ওয়ার্কফ্লো সুপারফাস্ট করতে আমাদের সাথে ইন্টিগ্রেট করে কাজ করতে পারেন।"
+
+[ক্লোজিং]
+"এ বিষয়ে কি আমরা বিস্তারিত আলোচনা করতে পারি?"`
+            },
+            consultant: {
+                id: 'consultant',
+                titleBn: '📈 ই-কমার্স পরামর্শক / গ্রোথ কনসালট্যান্ট',
+                titleEn: '📈 Growth Consultants & Mentors',
+                text: `[শুরু]
+"আসসালামু আলাইকুম ভাইয়া, আপনার বিজনেস পরামর্শ ও গাইডলাইন নিয়মিত ফলো করি। আশা করি ভালো আছেন।"
+
+[মূল কথা]
+"নতুন ও রানিং ড্রপশিপারদের স্কেলিংয়ে সবচেয়ে বড় বাধা সঠিক ট্র্যাকিং ও সাপ্লায়ারের অভাব। আমাদের টুল ড্রপশিপারদের প্রতিদিনের লিড, ফলো-আপ ও পারফরম্যান্স নিখুঁতভাবে ট্র্যাক করে।"
+
+[অফার]
+"আপনার ক্লায়েন্ট ও শিক্ষার্থীদের সফল করতে আমাদের ট্র্যাকার সমাধান তাদের অপারেশনে যুক্ত করতে পারেন।"
+
+[ক্লোজিং]
+"কখন আপনার ফ্রি সময় হবে একটু কথা বলার জন্য?"`
+            },
+            general: {
+                id: 'general',
+                titleBn: '📦 সাধারণ ড্রপশিপার / জেনারেল পিচ',
+                titleEn: '📦 General Dropshipper Pitch',
+                text: `[শুরু - সালাম ও পরিচয়]
+"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি। কেমন চলছে আপনার অনলাইন ব্যবসা?"
+
+[ফলো-আপ ও বর্তমান অবস্থা]
+"আপনার ফেসবুক পেজে যে প্রোডাক্টগুলো প্রমোট করছেন, সেগুলো কি নিজের স্টক থেকে দিচ্ছেন নাকি ড্রপশিপিং করছেন?"
+
+[আমাদের সার্ভিস]
+"আমরা ড্রপশিপার ও সাপ্লায়ারদের জন্য একটি রিয়েল-টাইম ট্র্যাকিং প্ল্যাটফর্ম পরিচালনা করি। যেখানে আপনি প্রতিদিনের লিড, কাস্টমার ফলো-আপ এবং ভেরিফায়েড সাপ্লায়ারদের তথ্য এক জায়গায় পেয়ে যাবেন।"
+
+[আগ্রহ যাচাই]
+"আপনি কি বর্তমানে নতুন উইনিং প্রোডাক্ট সোর্সিং অথবা প্রফেশনাল ড্রপশিপিং নেটওয়ার্কে যুক্ত হতে আগ্রহী?"`
+            }
+        };
+
+        let prompterScrollInterval = null;
+        let isPrompterPlaying = false;
+        let isPrompterHovered = false;
+        let prompterSpeed = Number(localStorage.getItem(STORAGE_KEYS.prompterSpeed)) || 1.0;
+        let prompterFontSize = Number(localStorage.getItem(STORAGE_KEYS.prompterFontSize)) || 15;
+        let currentScriptId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+        let isEditingScript = false;
+
+        function getCustomScripts() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.customScripts);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return {};
+        }
+
+        function saveCustomScriptsData(data) {
+            try {
+                localStorage.setItem(STORAGE_KEYS.customScripts, JSON.stringify(data));
+                syncSettingsToCloud();
+            } catch (e) {}
+        }
+
+        function getMergedScripts() {
+            const custom = getCustomScripts();
+            const merged = { ...DEFAULT_CALL_SCRIPTS };
+            Object.entries(custom).forEach(([k, v]) => {
+                if (merged[k]) {
+                    merged[k] = { ...merged[k], ...v };
+                } else {
+                    merged[k] = v;
+                }
+            });
+            return merged;
+        }
+
+        function populatePrompterScriptSelect() {
+            const select = document.getElementById('prompterScriptSelect');
+            if (!select) return;
+            const scripts = getMergedScripts();
+            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+            
+            select.innerHTML = Object.entries(scripts).map(([k, s]) => {
+                const title = currentLang === 'bn' ? (s.titleBn || s.titleEn) : (s.titleEn || s.titleBn);
+                const isDef = k === defaultId ? ' ★' : '';
+                return `<option value="${k}" ${k === currentScriptId ? 'selected' : ''}>${title}${isDef}</option>`;
+            }).join('');
+
+            updateDefaultScriptStar();
+        }
+
+        function updateDefaultScriptStar() {
+            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+            const star = document.getElementById('defaultScriptStar');
+            if (star) {
+                if (currentScriptId === defaultId) {
+                    star.className = 'fa-solid fa-star text-amber-500';
+                } else {
+                    star.className = 'fa-regular fa-star text-slate-400';
+                }
+            }
+        }
+
+        function setAsDefaultScript() {
+            localStorage.setItem(STORAGE_KEYS.defaultScriptId, currentScriptId);
+            populatePrompterScriptSelect();
+            updateDefaultScriptStar();
+            syncSettingsToCloud();
+            alert(currentLang === 'bn' ? "ডিফল্ট স্ক্রিপ্ট হিসেবে সেট করা হয়েছে!" : "Set as default script!");
+        }
+
+        function renderPrompterScript() {
+            const scripts = getMergedScripts();
+            const s = scripts[currentScriptId] || scripts.perf_marketer || Object.values(scripts)[0];
+            const textEl = document.getElementById('prompterScriptText');
+            const textarea = document.getElementById('prompterEditTextarea');
+            if (textEl) {
+                textEl.innerText = s ? s.text : '';
+                textEl.style.fontSize = `${prompterFontSize}px`;
+            }
+            if (textarea) {
+                textarea.value = s ? s.text : '';
+            }
+        }
+
+        function onSelectPrompterScript(id) {
+            currentScriptId = id;
+            if (isEditingScript) toggleScriptEdit(false);
+            renderPrompterScript();
+            updateDefaultScriptStar();
+            rewindPrompter();
+        }
+
+        function togglePrompter(show) {
+            const drawer = document.getElementById('prompterDrawer');
+            if (!drawer) return;
+            if (show) {
+                drawer.classList.remove('translate-x-full');
+                populatePrompterScriptSelect();
+                renderPrompterScript();
+                setupPrompterListeners();
+            } else {
+                drawer.classList.add('translate-x-full');
+                pausePrompterAutoScroll();
+            }
+        }
+
+        function toggleScriptEdit(forceState) {
+            isEditingScript = typeof forceState === 'boolean' ? forceState : !isEditingScript;
+            const textEl = document.getElementById('prompterScriptText');
+            const editorEl = document.getElementById('prompterScriptEditor');
+            const btnText = document.getElementById('btnScriptEditText');
+            if (isEditingScript) {
+                pausePrompterAutoScroll();
+                if (textEl) textEl.classList.add('hidden');
+                if (editorEl) editorEl.classList.remove('hidden');
+                if (btnText) btnText.innerText = currentLang === 'bn' ? 'রিড মোড' : 'Read';
+            } else {
+                if (textEl) textEl.classList.remove('hidden');
+                if (editorEl) editorEl.classList.add('hidden');
+                if (btnText) btnText.innerText = currentLang === 'bn' ? 'এডিট' : 'Edit';
+            }
+        }
+
+        function saveCustomScript() {
+            const textarea = document.getElementById('prompterEditTextarea');
+            if (!textarea) return;
+            const custom = getCustomScripts();
+            const scripts = getMergedScripts();
+            const cur = scripts[currentScriptId] || {};
+            custom[currentScriptId] = {
+                id: currentScriptId,
+                titleBn: cur.titleBn || 'কাস্টম স্ক্রিপ্ট',
+                titleEn: cur.titleEn || 'Custom Script',
+                text: textarea.value
+            };
+            saveCustomScriptsData(custom);
+            renderPrompterScript();
+            toggleScriptEdit(false);
+            alert(currentLang === 'bn' ? "স্ক্রিপ্ট সফলভাবে সংরক্ষিত হয়েছে!" : "Script saved successfully!");
+        }
+
+        function startPrompterAutoScroll() {
+            stopPrompterAutoScroll();
+            isPrompterPlaying = true;
+            updatePrompterPlayStateUI();
+
+            const container = document.getElementById('prompterScrollContainer');
+            if (!container) return;
+
+            prompterScrollInterval = setInterval(() => {
+                if (!isPrompterPlaying || isPrompterHovered) return;
+                const step = prompterSpeed * 0.9;
+                container.scrollTop += step;
+
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 4) {
+                    pausePrompterAutoScroll();
+                }
+            }, 30);
+        }
+
+        function pausePrompterAutoScroll() {
+            isPrompterPlaying = false;
+            stopPrompterAutoScroll();
+            updatePrompterPlayStateUI();
+        }
+
+        function stopPrompterAutoScroll() {
+            if (prompterScrollInterval) {
+                clearInterval(prompterScrollInterval);
+                prompterScrollInterval = null;
+            }
+        }
+
+        function togglePrompterPlay() {
+            if (isPrompterPlaying) {
+                pausePrompterAutoScroll();
+            } else {
+                startPrompterAutoScroll();
+            }
+        }
+
+        function rewindPrompter() {
+            const container = document.getElementById('prompterScrollContainer');
+            if (container) {
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function updatePrompterPlayStateUI() {
+            const btn = document.getElementById('btnPrompterPlay');
+            const icon = document.getElementById('iconPrompterPlay');
+            const text = document.getElementById('textPrompterPlay');
+            const statusBadge = document.getElementById('prompterStatusBadge');
+
+            if (isPrompterPlaying) {
+                if (btn) btn.className = 'bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-95';
+                if (icon) icon.className = 'fa-solid fa-pause text-[10px]';
+                if (text) text.innerText = currentLang === 'bn' ? 'পজ' : 'Pause';
+                if (statusBadge) {
+                    statusBadge.className = 'text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 animate-pulse';
+                    statusBadge.innerText = currentLang === 'bn' ? 'চলছে ▶' : 'Playing ▶';
+                }
+            } else {
+                if (btn) btn.className = 'bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-95';
+                if (icon) icon.className = 'fa-solid fa-play text-[10px]';
+                if (text) text.innerText = currentLang === 'bn' ? 'প্লে' : 'Play';
+                if (statusBadge) {
+                    statusBadge.className = 'text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300';
+                    statusBadge.innerText = currentLang === 'bn' ? 'স্টপ' : 'Stopped';
+                }
+            }
+        }
+
+        function setPrompterSpeed(speed) {
+            prompterSpeed = speed;
+            localStorage.setItem(STORAGE_KEYS.prompterSpeed, speed);
+        }
+
+        function changePrompterFontSize(delta) {
+            prompterFontSize = Math.min(24, Math.max(12, prompterFontSize + delta * 2));
+            localStorage.setItem(STORAGE_KEYS.prompterFontSize, prompterFontSize);
+            const textEl = document.getElementById('prompterScriptText');
+            if (textEl) textEl.style.fontSize = `${prompterFontSize}px`;
+        }
+
+        let prompterListenersSetup = false;
+        function setupPrompterListeners() {
+            if (prompterListenersSetup) return;
+            prompterListenersSetup = true;
+
+            const container = document.getElementById('prompterScrollContainer');
+            if (container) {
+                // Pause on cursor hover (as requested by user)
+                container.addEventListener('mouseenter', () => {
+                    isPrompterHovered = true;
+                    const badge = document.getElementById('prompterHoverBadge');
+                    if (badge) badge.classList.remove('hidden');
+                });
+                container.addEventListener('mouseleave', () => {
+                    isPrompterHovered = false;
+                    const badge = document.getElementById('prompterHoverBadge');
+                    if (badge) badge.classList.add('hidden');
+                });
+
+                // Touch support for mobile/tablets
+                container.addEventListener('touchstart', () => {
+                    isPrompterHovered = true;
+                }, { passive: true });
+                container.addEventListener('touchend', () => {
+                    setTimeout(() => { isPrompterHovered = false; }, 1200);
+                }, { passive: true });
+            }
+
+            // Keyboard shortcut (Escape closes prompter)
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const drawer = document.getElementById('prompterDrawer');
+                    if (drawer && !drawer.classList.contains('translate-x-full')) {
+                        togglePrompter(false);
+                    }
+                }
+            });
+        }
+
         // ─── Called Leads State (persisted + synced) ───────────────────────
         let calledLeadIds = new Set();
 
@@ -1584,6 +1983,7 @@
                 calledLeadIds.delete(numId);
             } else {
                 calledLeadIds.add(numId);
+                recordContactActivity(numId);
                 window.location.href = 'tel:+' + cleaned;
             }
             saveCalledLeadIds();
@@ -1598,11 +1998,15 @@
                 const dailyActivities = getDailyActivities();
                 const calledArr = [...calledLeadIds];
                 const followups = getLeadFollowups();
+                const customScripts = getCustomScripts();
+                const defaultScriptId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
                 const payload = JSON.stringify({
                     targetSettings,
                     dailyActivities,
                     calledLeadIds: calledArr,
                     leadFollowups: followups,
+                    customScripts,
+                    defaultScriptId,
                     updatedAt: new Date().toISOString()
                 });
 
@@ -1621,6 +2025,8 @@
                     backupData.dailyActivities = dailyActivities;
                     backupData.calledLeadIds = calledArr;
                     backupData.leadFollowups = followups;
+                    backupData.customScripts = customScripts;
+                    backupData.defaultScriptId = defaultScriptId;
                     backupData.lastSync = new Date().toISOString();
                     apiBackupCloudPut(backupData).catch(() => {});
                 }
@@ -1990,6 +2396,12 @@
                                 leadFollowups = { ...leadFollowups, ...parsed.leadFollowups };
                                 saveLeadFollowups();
                             }
+                            if (parsed.customScripts && typeof parsed.customScripts === 'object') {
+                                localStorage.setItem(STORAGE_KEYS.customScripts, JSON.stringify(parsed.customScripts));
+                            }
+                            if (parsed.defaultScriptId) {
+                                localStorage.setItem(STORAGE_KEYS.defaultScriptId, parsed.defaultScriptId);
+                            }
                         } catch (pe) {
                             console.warn('sys_settings parse error:', pe);
                         }
@@ -2238,7 +2650,70 @@
                 }
             });
 
+            // Update Filter Select Options cleanly
+            const filterRole = document.getElementById('filterRole');
+            if (filterRole) {
+                const val = filterRole.value;
+                filterRole.innerHTML = currentLang === 'bn' ? `
+                    <option value="ALL">সকল ভূমিকা</option>
+                    <option value="D">Dropshipper (D)</option>
+                    <option value="S">Supplier (S)</option>
+                ` : `
+                    <option value="ALL">All Roles</option>
+                    <option value="D">Dropshipper (D)</option>
+                    <option value="S">Supplier (S)</option>
+                `;
+                filterRole.value = val;
+            }
+
+            const filterFollowup = document.getElementById('filterFollowup');
+            if (filterFollowup) {
+                const val = filterFollowup.value;
+                filterFollowup.innerHTML = currentLang === 'bn' ? `
+                    <option value="ALL">সকল ফলো-আপ</option>
+                    <option value="phone_off">📵 ফোন বন্ধ</option>
+                    <option value="no_answer">🔕 ফোন ধরে নাই</option>
+                    <option value="call_later">⏳ পরে কথা বলবে</option>
+                    <option value="wa_sent">💬 মেসেজ দেওয়া হয়েছে</option>
+                    <option value="interested">🤝 আগ্রহী</option>
+                    <option value="not_interested">❌ আগ্রহী নয়</option>
+                    <option value="has_callback">⏰ কল শিডিউল</option>
+                    <option value="today_callback">⚠️ আজকের শিডিউল</option>
+                ` : `
+                    <option value="ALL">All Follow-ups</option>
+                    <option value="phone_off">📵 Phone Off</option>
+                    <option value="no_answer">🔕 No Answer</option>
+                    <option value="call_later">⏳ Call Later</option>
+                    <option value="wa_sent">💬 Messaged</option>
+                    <option value="interested">🤝 Interested</option>
+                    <option value="not_interested">❌ Not Interested</option>
+                    <option value="has_callback">⏰ Scheduled Calls</option>
+                    <option value="today_callback">⚠️ Today's Schedule</option>
+                `;
+                filterFollowup.value = val;
+            }
+
+            // Input Placeholders
+            const noteInput = document.getElementById('noteInput');
+            if (noteInput) {
+                noteInput.placeholder = currentLang === 'bn' ? 'যেমন: ক্যাটালগ পাঠানো হয়েছে' : 'e.g. Catalog sent';
+            }
+            const newTagName = document.getElementById('newTagName');
+            if (newTagName) {
+                newTagName.placeholder = currentLang === 'bn' ? 'যেমন: Mini Fan' : 'e.g. Mini Fan';
+            }
+
+            // View toggle button text
+            const btnText = document.getElementById('viewToggleText');
+            if (btnText) {
+                btnText.innerText = currentViewMode === 'card' 
+                    ? (currentLang === 'bn' ? 'টেবিল ভিউ' : 'Table View')
+                    : (currentLang === 'bn' ? 'কার্ড ভিউ' : 'Card View');
+            }
+
+            populatePrompterScriptSelect();
             localStorage.setItem(STORAGE_KEYS.lang, currentLang);
+            renderTags();
             renderLeads();
             updateTargetProgress();
             if (chartInstance) updateChart();
@@ -2305,6 +2780,7 @@
         }
 
         async function toggleRole(leadId) {
+            recordContactActivity(leadId);
             const target = leads.find(l => l.id === leadId);
             if (!target) return;
             target.role = target.role === 'D' ? 'S' : 'D';
@@ -2642,6 +3118,117 @@
             }).join('');
         }
 
+        // ─── Pagination Engine ─────────────────────────────────────────────
+        let currentPage = 1;
+        let pageSize = localStorage.getItem(STORAGE_KEYS.pageSize) 
+            ? (localStorage.getItem(STORAGE_KEYS.pageSize) === 'ALL' ? 'ALL' : Number(localStorage.getItem(STORAGE_KEYS.pageSize))) 
+            : 20;
+
+        function setPageSize(val) {
+            pageSize = val === 'ALL' ? 'ALL' : Number(val);
+            currentPage = 1;
+            localStorage.setItem(STORAGE_KEYS.pageSize, pageSize);
+            renderLeads();
+        }
+
+        function goToPage(p) {
+            currentPage = p;
+            renderLeads();
+            const topEl = document.getElementById('leadTableWrapper') || document.getElementById('leadCardsContainer');
+            if (topEl) topEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function onFilterChange() {
+            currentPage = 1;
+            renderLeads();
+        }
+
+        function renderPagination(totalItems) {
+            const infoEl = document.getElementById('paginationInfo');
+            const btnContainer = document.getElementById('paginationButtons');
+            const selectEl = document.getElementById('pageSizeSelect');
+            if (selectEl && String(selectEl.value) !== String(pageSize)) {
+                selectEl.value = pageSize;
+            }
+
+            if (!infoEl || !btnContainer) return;
+
+            if (totalItems === 0) {
+                infoEl.innerText = currentLang === 'bn' ? 'কোনো লিড নেই' : '0 leads';
+                btnContainer.innerHTML = '';
+                return;
+            }
+
+            if (pageSize === 'ALL') {
+                infoEl.innerText = currentLang === 'bn' 
+                    ? `১ - ${convertEnToBnNum(totalItems)} / মোট ${convertEnToBnNum(totalItems)}টি` 
+                    : `1 - ${totalItems} of ${totalItems}`;
+                btnContainer.innerHTML = '';
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startItem = (currentPage - 1) * pageSize + 1;
+            const endItem = Math.min(currentPage * pageSize, totalItems);
+
+            infoEl.innerText = currentLang === 'bn'
+                ? `${convertEnToBnNum(startItem)} - ${convertEnToBnNum(endItem)} / মোট ${convertEnToBnNum(totalItems)}টি`
+                : `${startItem} - ${endItem} of ${totalItems}`;
+
+            let html = '';
+
+            // Prev Button
+            const prevDisabled = currentPage <= 1;
+            html += `
+                <button onclick="goToPage(${currentPage - 1})" ${prevDisabled ? 'disabled' : ''} 
+                        class="px-2 py-1 rounded-md border text-xs transition ${
+                            prevDisabled 
+                            ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-700 text-slate-400' 
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200'
+                        }">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                </button>
+            `;
+
+            // Page numbers
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                    const isCurrent = p === currentPage;
+                    const pLabel = currentLang === 'bn' ? convertEnToBnNum(p) : p;
+                    html += `
+                        <button onclick="goToPage(${p})" 
+                                class="w-7 h-7 rounded-md text-xs font-semibold transition ${
+                                    isCurrent 
+                                    ? 'bg-indigo-600 text-white shadow-2xs' 
+                                    : 'border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                }">
+                            ${pLabel}
+                        </button>
+                    `;
+                } else if (p === currentPage - 2 || p === currentPage + 2) {
+                    html += `<span class="px-1 text-slate-400">...</span>`;
+                }
+            }
+
+            // Next Button
+            const nextDisabled = currentPage >= totalPages;
+            html += `
+                <button onclick="goToPage(${currentPage + 1})" ${nextDisabled ? 'disabled' : ''} 
+                        class="px-2 py-1 rounded-md border text-xs transition ${
+                            nextDisabled 
+                            ? 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-700 text-slate-400' 
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200'
+                        }">
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            `;
+
+            btnContainer.innerHTML = html;
+        }
+
         function renderLeads() {
             const tableBody = document.getElementById('leadTableBody');
             const cardContainer = document.getElementById('leadCardsContainer');
@@ -2673,6 +3260,8 @@
                 return matchTag && matchRole && matchFollowup;
             });
 
+            renderPagination(filtered.length);
+
             if (filtered.length === 0) {
                 const emptyMsg = `<tr><td colspan="9" class="p-6 text-center text-slate-400 dark:text-slate-500">${translations[currentLang].noData}</td></tr>`;
                 if (tableBody) tableBody.innerHTML = emptyMsg;
@@ -2680,9 +3269,16 @@
                 return;
             }
 
+            // Slice for current page
+            let pagedLeads = filtered;
+            if (pageSize !== 'ALL') {
+                const start = (currentPage - 1) * pageSize;
+                pagedLeads = filtered.slice(start, start + pageSize);
+            }
+
             // 1. Render Table Rows
             if (tableBody) {
-                tableBody.innerHTML = filtered.map(l => {
+                tableBody.innerHTML = pagedLeads.map(l => {
                     const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
                     const colorClass = getTagColor(tagObj.id);
                     const platformInfo = parsePlatformUrl(l.page);
@@ -2845,7 +3441,7 @@
 
             // 2. Render Responsive Mobile/Tablet Cards
             if (cardContainer) {
-                cardContainer.innerHTML = filtered.map(l => {
+                cardContainer.innerHTML = pagedLeads.map(l => {
                     const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
                     const colorClass = getTagColor(tagObj.id);
                     const platformInfo = parsePlatformUrl(l.page);
@@ -3019,5 +3615,88 @@
         window.addEventListener('online', () => syncWithCloud(false));
         setInterval(() => syncWithCloud(false), 30000); // Auto-sync every 30 seconds
     </script>
+    <!-- Cold Call Script Teleprompter Drawer -->
+    <div id="prompterDrawer" class="fixed inset-y-0 right-0 w-full sm:w-[420px] md:w-[460px] bg-white dark:bg-slate-900 shadow-2xl z-50 border-l border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform translate-x-full">
+        <!-- Header -->
+        <div class="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-850">
+            <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold shadow-2xs">
+                    <i class="fa-solid fa-microphone-lines"></i>
+                </span>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                        <span data-i18n="prompterTitle">কল স্ক্রিপ্ট প্রম্পটার</span>
+                        <span id="prompterStatusBadge" class="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">স্টপ</span>
+                    </h3>
+                    <span id="prompterHoverBadge" class="hidden text-[9px] text-amber-600 dark:text-amber-400 font-medium">⏸ হোভারে পজ করা হয়েছে</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="toggleScriptEdit()" id="btnScriptEdit" class="text-[11px] px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition" title="স্ক্রিপ্ট এডিট">
+                    <i class="fa-solid fa-pen text-[10px]"></i> <span id="btnScriptEditText">এডিট</span>
+                </button>
+                <button onclick="togglePrompter(false)" class="w-7 h-7 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Script Selector Bar -->
+        <div class="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center gap-2">
+            <select id="prompterScriptSelect" onchange="onSelectPrompterScript(this.value)" class="flex-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+            </select>
+            <button onclick="setAsDefaultScript()" id="btnSetDefaultScript" class="text-[11px] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition" title="ডিফল্ট স্ক্রিপ্ট হিসেবে সেট করুন">
+                <i id="defaultScriptStar" class="fa-regular fa-star text-amber-500"></i>
+                <span class="text-[10px] ml-1">ডিফল্ট</span>
+            </button>
+        </div>
+
+        <!-- Teleprompter Controls Bar -->
+        <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs bg-white dark:bg-slate-900">
+            <!-- Play / Pause & Rewind -->
+            <div class="flex items-center gap-1.5">
+                <button onclick="togglePrompterPlay()" id="btnPrompterPlay" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition active:scale-95">
+                    <i id="iconPrompterPlay" class="fa-solid fa-play text-[10px]"></i>
+                    <span id="textPrompterPlay">প্লে</span>
+                </button>
+                <button onclick="rewindPrompter()" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs border border-slate-200 dark:border-slate-700 transition" title="শুরু থেকে">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+            </div>
+
+            <!-- Speed & Font Size -->
+            <div class="flex items-center gap-2.5">
+                <!-- Speed Selector -->
+                <div class="flex items-center gap-1">
+                    <span class="text-[10px] text-slate-400">গতি:</span>
+                    <select id="prompterSpeedSelect" onchange="setPrompterSpeed(Number(this.value))" class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-[11px] outline-none">
+                        <option value="0.5">০.৫x</option>
+                        <option value="1.0" selected>১x</option>
+                        <option value="1.5">১.৫x</option>
+                        <option value="2.0">২x</option>
+                        <option value="3.0">৩x</option>
+                    </select>
+                </div>
+                <!-- Font Size -->
+                <div class="flex items-center gap-0.5">
+                    <button onclick="changePrompterFontSize(-1)" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center border dark:border-slate-700" title="ফন্ট ছোট">A-</button>
+                    <button onclick="changePrompterFontSize(1)" class="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center border dark:border-slate-700" title="ফন্ট বড়">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Display Container (Autoscrolling Area with Pause on Hover) -->
+        <div id="prompterScrollContainer" class="flex-1 overflow-y-auto p-4 sm:p-5 text-slate-800 dark:text-slate-100 font-sans space-y-3 cursor-grab select-text scroll-smooth" style="scroll-behavior: smooth;">
+            <div id="prompterScriptText" class="whitespace-pre-line leading-relaxed font-medium"></div>
+            <div id="prompterScriptEditor" class="hidden">
+                <textarea id="prompterEditTextarea" rows="16" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="saveCustomScript()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition">সেভ করুন</button>
+                </div>
+            </div>
+            <div class="h-48"></div> <!-- Buffer bottom space for comfortable scrolling -->
+        </div>
+    </div>
+
 </body>
 </html>
