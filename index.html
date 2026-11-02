@@ -24,6 +24,20 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans min-h-screen p-3 md:p-6 transition-colors duration-200">
 
@@ -43,6 +57,10 @@
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
+                                <button onclick="toggleAudienceStrategyModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1.5 active:scale-95" title="টার্গেট অডিয়েন্স স্ট্র্যাটেজি ও পিচিং গাইড">
+                    <i class="fa-solid fa-bullseye"></i> <span data-i18n="targetStrategy">টার্গেট স্ট্র্যাটেজি</span>
+                </button>
+
                 <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
                     <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
                     <span data-i18n="btnSync">সিঙ্ক করুন</span>
@@ -223,7 +241,7 @@
         <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-3 bg-slate-50/50 dark:bg-slate-800/80">
                 <span class="font-semibold text-slate-700 dark:text-slate-200 text-xs" data-i18n="tableHeader">সকল সংগৃহীত লিড ও ফলো-আপ হিস্ট্রি</span>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <select id="filterTag" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
                         <option value="ALL" data-i18n="filterAllTags">সকল ট্যাগ</option>
                     </select>
@@ -232,28 +250,46 @@
                         <option value="D">শুধুমাত্র Dropshipper (D)</option>
                         <option value="S">শুধুমাত্র Supplier (S)</option>
                     </select>
+                    <select id="filterFollowup" onchange="renderLeads()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none">
+                        <option value="ALL">সকল ফলো-আপ অবস্থা</option>
+                        <option value="phone_off">📵 ফোন বন্ধ</option>
+                        <option value="no_answer">🔕 ফোন ধরে নাই</option>
+                        <option value="call_later">⏳ পরে কথা বলবে / ব্যস্ত</option>
+                        <option value="wa_sent">💬 মেসেজ পাঠিয়েছি</option>
+                        <option value="interested">🤝 আগ্রহী</option>
+                        <option value="not_interested">❌ আগ্রহী নয়</option>
+                        <option value="has_callback">⏰ শিডিউল করা আছে</option>
+                        <option value="today_callback">⚠️ আজকের শিডিউল</option>
+                    </select>
+                    <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center gap-1.5 transition shadow-2xs">
+                        <i id="viewToggleIcon" class="fa-solid fa-table-cells"></i>
+                        <span id="viewToggleText">কার্ড ভিউ</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div id="leadTableWrapper" class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100/70 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             <th class="p-3 text-center" data-i18n="thRole">ভূমিকা</th>
                             <th class="p-3" data-i18n="thPhone">ফোন নম্বর</th>
                             <th class="p-3 text-center" data-i18n="thStatus">স্ট্যাটাস</th>
-                            <th class="p-3" data-i18n="thWhatsApp">হোয়াটসঅ্যাপ অ্যাকশন</th>
-                            <th class="p-3" data-i18n="thPlatform">সোশ্যাল / সাইট লিংক</th>
-                            <th class="p-3" data-i18n="thTag">প্রোডাক্ট ট্যাগ</th>
-                            <th class="p-3" style="min-width: 180px;" data-i18n="thNote">ফলো-আপ নোট</th>
+                            <th class="p-3" data-i18n="thWhatsApp">কল ও WhatsApp</th>
+                            <th class="p-3">ফলো-আপ ট্যাগ</th>
+                            <th class="p-3" data-i18n="thPlatform">সোশ্যাল লিংক</th>
+                            <th class="p-3" data-i18n="thTag">ক্যাটাগরি / ট্যাগ</th>
+                            <th class="p-3" style="min-width: 220px;" data-i18n="thNote">নোট ও কল শিডিউল</th>
                             <th class="p-3 text-center" data-i18n="thAction">কার্যক্রম</th>
                         </tr>
                     </thead>
                     <tbody id="leadTableBody" class="divide-y divide-slate-100 dark:divide-slate-700 text-xs">
-                        <tr><td colspan="8" class="p-6 text-center text-slate-400 dark:text-slate-500">ক্লাউড ডাটা লোড হচ্ছে...</td></tr>
+                        <tr><td colspan="9" class="p-6 text-center text-slate-400 dark:text-slate-500">ক্লাউড ডাটা লোড হচ্ছে...</td></tr>
                     </tbody>
                 </table>
             </div>
+            <!-- Responsive Mobile/Tablet Cards Container -->
+            <div id="leadCardsContainer" class="hidden p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
 
     </div>
@@ -325,9 +361,27 @@
                         <option value="red">❌ আগ্রহহীন / বাতিল (Cancelled)</option>
                     </select>
                 </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">পার্মানেন্ট ফলো-আপ ট্যাগ</label>
+                        <select id="editQuickTagSelect" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">(কোনো ট্যাগ নয়)</option>
+                            <option value="phone_off">📵 ফোন বন্ধ</option>
+                            <option value="no_answer">🔕 ফোন ধরে নাই</option>
+                            <option value="call_later">⏳ পরে কথা বলবে / ব্যস্ত</option>
+                            <option value="wa_sent">💬 মেসেজ পাঠিয়েছি</option>
+                            <option value="interested">🤝 আগ্রহী</option>
+                            <option value="not_interested">❌ আগ্রহী নয়</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">পরবর্তী কল / ফ্রি টাইম</label>
+                        <input type="datetime-local" id="editCallbackInput" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblNote">ফলো-আপ নোট</label>
-                    <input type="text" id="editNoteInput" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="lblNote">ফলো-আপ নোট ও কথোপকথন</label>
+                    <textarea id="editNoteInput" rows="3" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t dark:border-slate-700">
                     <button type="button" onclick="closeEditModal()" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600" data-i18n="btnCancel">বাতিল</button>
@@ -420,6 +474,246 @@
 
             <div class="flex justify-end pt-2 border-t dark:border-slate-700">
                 <button onclick="toggleHistoryModal()" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600" data-i18n="btnClose">বন্ধ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note & Follow-up Details Modal -->
+    <div id="noteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-800/80">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-clipboard-list text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm flex items-center gap-2">
+                            <span>নোট ও ফলো-আপ ম্যানেজার</span>
+                            <span id="noteModalRole" class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"></span>
+                        </h3>
+                        <p id="noteModalPhone" class="text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="noteModalCallBtn" class="w-8 h-8 rounded-lg bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/50 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800 flex items-center justify-center text-xs transition" title="কল করুন">
+                        <i class="fa-solid fa-phone"></i>
+                    </button>
+                    <button id="noteModalWaBtn" class="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-xs transition" title="হোয়াটসঅ্যাপ">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </button>
+                    <button onclick="closeNoteModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-4 space-y-4 overflow-y-auto flex-1">
+                <!-- 1-Click Permanent Followup Tags -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1.5">
+                        <i class="fa-solid fa-tag text-indigo-500 mr-1"></i> পার্মানেন্ট ফলো-আপ ট্যাগ (১-ক্লিকে সিলেক্ট করুন):
+                    </label>
+                    <div id="modalQuickTagContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        <!-- Populated dynamically via renderModalQuickTags() -->
+                    </div>
+                </div>
+
+                <!-- Next Callback / Free Time Schedule -->
+                <div class="bg-indigo-50/50 dark:bg-indigo-950/20 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/40 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-semibold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-calendar-check text-indigo-500"></i> পরবর্তী কল / ফ্রি হওয়ার সময়:
+                        </label>
+                        <span id="callbackDueBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
+                    </div>
+                    <input type="datetime-local" id="noteModalCallbackTime" 
+                           class="w-full px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                    <!-- Quick Preset Buttons -->
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        <button type="button" onclick="setCallbackPreset('1h')" class="text-[10px] px-2 py-1 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-slate-600 transition shadow-2xs">+১ ঘণ্টা</button>
+                        <button type="button" onclick="setCallbackPreset('3h')" class="text-[10px] px-2 py-1 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-slate-600 transition shadow-2xs">+৩ ঘণ্টা</button>
+                        <button type="button" onclick="setCallbackPreset('today_evening')" class="text-[10px] px-2 py-1 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-slate-600 transition shadow-2xs">আজ বিকেল ৫:০০</button>
+                        <button type="button" onclick="setCallbackPreset('tomorrow_morning')" class="text-[10px] px-2 py-1 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-slate-600 transition shadow-2xs">কাল সকাল ১১:০০</button>
+                        <button type="button" onclick="setCallbackPreset('tomorrow_afternoon')" class="text-[10px] px-2 py-1 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md border border-slate-200 dark:border-slate-600 transition shadow-2xs">কাল বিকেল ৪:০০</button>
+                        <button type="button" onclick="setCallbackPreset('clear')" class="text-[10px] px-2 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-600 dark:text-rose-400 rounded-md border border-rose-200 dark:border-rose-800 transition shadow-2xs">রিসেট</button>
+                    </div>
+                </div>
+
+                <!-- Detailed Conversation History & Notes -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase">
+                            <i class="fa-solid fa-comment-dots text-indigo-500 mr-1"></i> কথোপকথন ও বিস্তারিত নোট:
+                        </label>
+                        <button type="button" onclick="insertNoteTimestamp()" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 transition flex items-center gap-1">
+                            <i class="fa-solid fa-clock text-[9px]"></i> আজকের সময় যোগ করুন
+                        </button>
+                    </div>
+                    <textarea id="noteModalText" rows="6" placeholder="কে কি বলেছে, কি চাহিদা, কোন বিষয়ে আগ্রহী, কেন ফোন ধরে নাই..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-2 bg-slate-50/70 dark:bg-slate-800/80">
+                <button type="button" onclick="closeNoteModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition">বাতিল</button>
+                <button type="button" onclick="saveNoteModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/25 flex items-center gap-2 transition active:scale-95">
+                    <i class="fa-solid fa-check"></i> সংরক্ষণ ও সিঙ্ক করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Target Audience Strategy Hub Modal -->
+    <div id="audienceStrategyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-3xl w-full shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-800/80">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-bullseye text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm md:text-base">
+                            টার্গেট অডিয়েন্স স্ট্র্যাটেজি ও বাল্ক ড্রপশিপার আকর্ষণের গাইড
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            রানিং ই-কমার্স ক্লায়েন্ট আছে এমন ৫টি প্রোফাইলকে টার্গেট করে সর্বোচ্চ ইউজার পাওয়ার স্ট্র্যাটেজি
+                        </p>
+                    </div>
+                </div>
+                <button onclick="toggleAudienceStrategyModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Content Body (5 Cards) -->
+            <div class="p-4 space-y-3.5 overflow-y-auto flex-1 text-xs">
+                <!-- Group 1 -->
+                <div class="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🎯</span>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">১. স্বাধীন পারফরম্যান্স মার্কেটার / মিডিয়া বায়ার</h4>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 font-semibold">প্রাইম টার্গেট #১</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>কারা এরা:</strong> যাদের সক্রিয় ই-কমার্স ক্লায়েন্ট আছে, নিয়মিত ফেসবুক ও টিকটক অ্যাড চালাচ্ছে কিন্তু নিজস্ব পণ্য সংগ্রহ, প্যাকেজিং বা অর্ডার পরিচালনার অবকাঠামো নেই।
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>আমাদের অফার / পিচিং হুক:</strong> "আপনার ক্লায়েন্টদের পণ্য ডেলিভারি বা ইনভেন্টরি নিয়ে ভাবতে হবে না। আমাদের ভেরিফায়েড ড্রপশিপিং নেটওয়ার্ক থেকে উইনিং প্রোডাক্ট দিন, আপনি নিশ্চিন্তে অ্যাড স্কেল করে কমিশন পান।"
+                    </p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-200/60 dark:border-indigo-800/50">
+                        <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium">💡 সুবিধা: একজন মার্কেটারের মাধ্যমেই ৩-১০টি ড্রপশিপার ক্লায়েন্ট পাওয়া যাবে!</span>
+                        <button onclick="copyPitch(1, this)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy"></i> পিচ মেসেজ কপি
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 2 -->
+                <div class="p-3.5 rounded-xl border border-purple-200 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-950/20 space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🏢</span>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">২. ছোট ও মাঝারি ডিজিটাল মার্কেটিং এজেন্সি</h4>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 font-semibold">বাল্ক ক্লায়েন্ট হাব</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>কারা এরা:</strong> যারা বিজ্ঞাপন, প্রচারণা, ক্রিয়েটিভ বা ব্যবসা বৃদ্ধির সেবা দেয় এবং ক্লায়েন্টদের জন্য অতিরিক্ত ই-কমার্স সুবিধা দিতে চায়।
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>আমাদের অফার / পিচিং হুক:</strong> "এজেন্সি পার্টনারশিপ — আপনার ড্রপশিপার ক্লায়েন্টদের সাপ্লাই চেইন ও অর্ডার ম্যানেজমেন্ট সলিউশন প্রোভাইড করুন কোনো ইনভেন্টরি ঝামেলা ছাড়াই।"
+                    </p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-purple-200/60 dark:border-purple-800/50">
+                        <span class="text-[10px] text-purple-600 dark:text-purple-400 font-medium">💡 সুবিধা: একটা এজেন্সির হাতে ২০+ রানিং ক্লায়েন্ট থাকে।</span>
+                        <button onclick="copyPitch(2, this)" class="bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy"></i> পিচ মেসেজ কপি
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 3 -->
+                <div class="p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🛍️</span>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">৩. ই-কমার্স ওয়েবসাইট ডেভেলপার ও Shopify/WooCommerce বিশেষজ্ঞ</h4>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 font-semibold">স্টোর ক্রিয়েটর</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>কারা এরা:</strong> যারা অনলাইন স্টোর তৈরি, সংযোগ ও স্বয়ংক্রিয়করণের কাজ করেন।
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>আমাদের অফার / পিচিং হুক:</strong> "স্টোর তৈরির পর ড্রপশিপারদের প্রধান চ্যালেঞ্জ নির্ভরযোগ্য প্রোডাক্ট সাপ্লাই ও ট্র্যাকিং। আপনার ক্লায়েন্টদের জন্য আমাদের ড্রপশিপিং ট্র্যাকার ও সাপ্লাই ইন্টিগ্রেশন দিন।"
+                    </p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-emerald-200/60 dark:border-emerald-800/50">
+                        <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">💡 সুবিধা: নতুন স্টোর ড্রপশিপারদের ডিরেক্ট সংযোগ।</span>
+                        <button onclick="copyPitch(3, this)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy"></i> পিচ মেসেজ কপি
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 4 -->
+                <div class="p-3.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">⚡</span>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">৪. API ও অটোমেশন বিশেষজ্ঞ</h4>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 font-semibold">সিস্টেম ইন্টিগ্রেটর</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>কারা এরা:</strong> যারা বিভিন্ন অনলাইন সিস্টেমের মধ্যে সংযোগ তৈরি করেন (যেমন কুরিয়ার, শিট, মেসেঞ্জার অটোমেশন)।
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>আমাদের অফার / পিচিং হুক:</strong> "ড্রপশিপারদের অর্ডার প্রসেসিং ও ট্র্যাকিং অটোমেশনে আমাদের প্ল্যাটফর্ম ব্যবহার করে আপনার ক্লায়েন্টদের স্মার্ট ওয়ার্কফ্লো উপহার দিন।"
+                    </p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-800/50">
+                        <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">💡 সুবিধা: একাধিক হাই-ভলিউম ক্লায়েন্টের সাথে ডিরেক্ট রিলেশন।</span>
+                        <button onclick="copyPitch(4, this)" class="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy"></i> পিচ মেসেজ কপি
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group 5 -->
+                <div class="p-3.5 rounded-xl border border-sky-200 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">📈</span>
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">৫. ই-কমার্স পরামর্শক / গ্রোথ কনসালট্যান্ট</h4>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300 font-semibold">স্ট্র্যাটেজিক পার্টনার</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>কারা এরা:</strong> যারা অনলাইন ব্যবসার কার্যক্রম উন্নত করতে, প্রফিট মার্জিন বাড়াতে এবং বিজনেস স্কেলিংয়ে পরামর্শ দেন।
+                    </p>
+                    <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <strong>আমাদের অফার / পিচিং হুক:</strong> "আপনার কনসালট্যান্ট ক্লায়েন্ট ও শিক্ষার্থীদের নির্ভরযোগ্য ট্র্যাকার ও ড্রপশিপিং সাপ্লায়ার সমাধান দিয়ে তাদের ব্যবসায়িক রিটার্ন নিশ্চিত করুন।"
+                    </p>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-sky-200/60 dark:border-sky-800/50">
+                        <span class="text-[10px] text-sky-600 dark:text-sky-400 font-medium">💡 সুবিধা: কমিউনিটি ও শিক্ষার্থীদের মাধ্যমে বিপুল ইউজার আকর্ষণ।</span>
+                        <button onclick="copyPitch(5, this)" class="bg-sky-600 hover:bg-sky-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition">
+                            <i class="fa-regular fa-copy"></i> পিচ মেসেজ কপি
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-3 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-800/80">
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                    💡 এই ৫টি ক্যাটাগরি ডিফল্টভাবে আপনার প্রোডাক্ট ট্যাগ তালিকায় যুক্ত আছে
+                </span>
+                <button onclick="toggleAudienceStrategyModal()" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                    বন্ধ করুন
+                </button>
             </div>
         </div>
     </div>
@@ -537,7 +831,9 @@
             lastTag: 'rb_last_selected_tag',
             targetSettings: 'dropshipper_target_settings',
             dailyActivities: 'dropshipper_daily_activities',
-            calledLeads: 'dropshipper_called_leads'
+            calledLeads: 'dropshipper_called_leads',
+            leadFollowups: 'dropshipper_lead_followups',
+            viewMode: 'dropshipper_view_mode'
         };
 
         // PWA Service Worker Registration
@@ -710,7 +1006,7 @@
                 btnClose: "বন্ধ করুন",
                 statusCompleted: "লক্ষ্য পূরণ ✅",
                 statusIncomplete: "অসম্পূর্ণ ⚠️",
-                btnSync: "সিঙ্ক করুন"
+                btnSync: "সিঙ্ক করুন", targetStrategy: "টার্গেট স্ট্র্যাটেজি"
             },
             en: {
                 cloudStatus: "Supabase Cloud Active",
@@ -768,7 +1064,7 @@
                 btnClose: "Close",
                 statusCompleted: "Target Met ✅",
                 statusIncomplete: "Incomplete ⚠️",
-                btnSync: "Sync Now"
+                btnSync: "Sync Now", targetStrategy: "Target Strategy"
             }
         };
 
@@ -902,6 +1198,364 @@
             };
         }
 
+        // ─── Permanent Follow-up Tags Config & Pitch Templates ──────────
+        const FOLLOWUP_TAGS = {
+            phone_off: {
+                id: 'phone_off',
+                labelBn: 'ফোন বন্ধ',
+                labelEn: 'Phone Off',
+                icon: 'fa-solid fa-phone-slash',
+                badgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-700'
+            },
+            no_answer: {
+                id: 'no_answer',
+                labelBn: 'ফোন ধরে নাই',
+                labelEn: 'No Answer',
+                icon: 'fa-solid fa-bell-slash',
+                badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+            },
+            call_later: {
+                id: 'call_later',
+                labelBn: 'পরে কথা বলবে / ব্যস্ত',
+                labelEn: 'Call Later',
+                icon: 'fa-solid fa-clock',
+                badgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700'
+            },
+            wa_sent: {
+                id: 'wa_sent',
+                labelBn: 'মেসেজ পাঠিয়েছি',
+                labelEn: 'Messaged',
+                icon: 'fa-brands fa-whatsapp',
+                badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+            },
+            interested: {
+                id: 'interested',
+                labelBn: 'আগ্রহী',
+                labelEn: 'Interested',
+                icon: 'fa-solid fa-thumbs-up',
+                badgeClass: 'bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-300 dark:border-sky-700'
+            },
+            not_interested: {
+                id: 'not_interested',
+                labelBn: 'আগ্রহী নয়',
+                labelEn: 'Not Interested',
+                icon: 'fa-solid fa-ban',
+                badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+            }
+        };
+
+        const PITCH_TEMPLATES = {
+            1: `আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন।\nআপনার অ্যাডভার্টাইজিং ও পারফরম্যান্স মার্কেটিং ক্যাম্পেইন বেশ ভালো চলছে দেখলাম।\nআমরা জানি মার্কেটারদের মূল চ্যালেঞ্জ হলো অনেক ক্লায়েন্টের নিজস্ব নির্ভরযোগ্য প্রোডাক্ট সোর্সিং বা ডেলিভারি অবকাঠামো থাকে না, ফলে অ্যাড চালিয়েও পুরো পটেনশিয়াল কাজে লাগানো যায় না।\nআমাদের প্ল্যাটফর্মে আপনি ভেরিফায়েড ড্রপশিপার ও সাপ্লায়ারদের ডিরেক্ট প্রোডাক্ট ব্যাকএন্ড পাচ্ছেন—যাতে আপনার ক্লায়েন্টদের স্টক বা ডেলিভারির চিন্তা না থাকে এবং আপনি নিশ্চিন্তে অ্যাড স্কেল করতে পারেন।\nএ বিষয়ে আপনার সাথে কি ২ মিনিট কথা বলা সম্ভব?`,
+            2: `আসসালামু আলাইকুম ভাইয়া,\nআমরা জানি ডিজিটাল মার্কেটিং এজেন্সির জন্য ক্লায়েন্টদের ফুল-স্ট্যাক ই-কমার্স সলিউশন দেওয়া এখন খুব জরুরি।\nআপনার যেসকল ড্রপশিপার বা ই-কমার্স ক্লায়েন্ট প্রোডাক্ট সোর্সিং, ট্র্যাকিং ও সাপ্লাই জটিলতায় ভুগছে, তাদের জন্য আমরা দিচ্ছি কমপ্লিট অ্যান্ড-টু-অ্যান্ড ড্রপশিপিং ট্র্যাকিং ও ভেরিফায়েড সাপ্লাই নেটওয়ার্ক।\nএতে আপনার ক্লায়েন্টদের রিটেনশন ও সেলস উভয়ই বাড়বে।\nআপনার সাথে একটা ছোট পার্টনারশিপ কল শিডিউল করা যাবে কি?`,
+            3: `আসসালামু আলাইকুম ভাইয়া,\nই-কমার্স ও Shopify/WooCommerce স্টোর ডেভেলপমেন্টে আপনার কাজ দারুণ।\nস্টোর তৈরির পরই ক্লায়েন্টদের সবচেয়ে বড় সংকট তৈরি হয় নির্ভরযোগ্য প্রোডাক্ট ও ড্রপশিপার ট্র্যাকিং নিয়ে।\nআমাদের প্ল্যাটফর্ম আপনার ক্লায়েন্টদের অটোমেটেড ট্র্যাকিং ও প্রোডাক্ট সাপোর্ট দিতে প্রস্তুত।\nআপনার ক্লায়েন্টদের এক্সক্লুসিভ ভ্যালু দিতে আমরা কি আলোচনা করতে পারি?`,
+            4: `আসসালামু আলাইকুম ভাইয়া,\nAPI ও ই-কমার্স অটোমেশন নিয়ে আপনার কাজের প্রশংসা করি।\nআমাদের ড্রপশিপার ট্র্যাকিং প্ল্যাটফর্মে রিয়েল-টাইম লিড, অর্ডার ও অটোমেশন ইন্টিগ্রেশন রয়েছে। আপনার ক্লায়েন্টদের ড্রপশিপিং ওয়ার্কফ্লো সুপারফাস্ট করতে আমরা একসাথে কাজ করতে আগ্রহী।\nকখন আপনার ফ্রি সময় হবে?`,
+            5: `আসসালামু আলাইকুম ভাইয়া,\nই-কমার্স গ্রোথ কনসালটিংয়ে আপনার দিকনির্দেশনা খুবই কার্যকর।\nড্রপশিপারদের গ্রোথ স্কেল করতে সঠিক ট্র্যাকিং ও নির্ভরযোগ্য সাপ্লায়ার সবচেয়ে জরুরি ফ্যাক্টর। আমাদের সিস্টেম আপনার ক্লায়েন্ট ও মেন্টিদের ব্যবসার অপ্টিমাইজেশন বহুগুণ সহজ করে দেবে।\nআপনার ফ্রি সময়ে একটু কথা বলতে চাচ্ছিলাম।`
+        };
+
+        let leadFollowups = {}; // { [leadId]: { quickTag: '', callbackTime: '', updatedAt: '' } }
+
+        function getLeadFollowups() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEYS.leadFollowups);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return {};
+        }
+
+        function saveLeadFollowups() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.leadFollowups, JSON.stringify(leadFollowups));
+            } catch (e) {}
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        function formatCallbackBadge(callbackTime) {
+            if (!callbackTime) return '';
+            try {
+                const target = new Date(callbackTime);
+                if (isNaN(target.getTime())) return '';
+                const now = new Date();
+                const isPast = target < now;
+                const isToday = target.toDateString() === now.toDateString();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const isTomorrow = target.toDateString() === tomorrow.toDateString();
+
+                const timeStr = target.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+
+                if (isPast) {
+                    return `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 font-semibold border border-rose-300 dark:border-rose-800" title="কল করার সময় পার হয়ে গেছে"><i class="fa-solid fa-triangle-exclamation"></i> কল বাকি (${timeStr})</span>`;
+                }
+                if (isToday) {
+                    return `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700 animate-pulse" title="আজকেই কথা বলার কথা"><i class="fa-solid fa-clock"></i> আজ ${timeStr}</span>`;
+                }
+                if (isTomorrow) {
+                    return `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 font-semibold border border-sky-300 dark:border-sky-800" title="কালকে কথা হবে"><i class="fa-regular fa-calendar-check"></i> কাল ${timeStr}</span>`;
+                }
+                const dateStr = target.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+                return `<span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-600"><i class="fa-regular fa-calendar"></i> ${dateStr}, ${timeStr}</span>`;
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function toggleAudienceStrategyModal() {
+            const modal = document.getElementById('audienceStrategyModal');
+            if (!modal) return;
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function copyPitch(id, btnEl) {
+            const text = PITCH_TEMPLATES[id] || '';
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btnEl.innerHTML;
+                btnEl.innerHTML = '<i class="fa-solid fa-check text-emerald-300"></i> কপি সম্পন্ন!';
+                btnEl.classList.add('bg-emerald-600');
+                setTimeout(() => {
+                    btnEl.innerHTML = orig;
+                    btnEl.classList.remove('bg-emerald-600');
+                }, 2200);
+            }).catch(err => {
+                alert("কপি করা যায়নি, ব্রাউজার পারমিশন চেক করুন।");
+            });
+        }
+
+        let currentNoteLeadId = null;
+        let modalSelectedQuickTag = '';
+
+        function openNoteModal(leadId) {
+            const numId = Number(leadId);
+            const lead = leads.find(l => Number(l.id) === numId);
+            if (!lead) return;
+            currentNoteLeadId = numId;
+
+            document.getElementById('noteModalPhone').innerText = lead.phone;
+            document.getElementById('noteModalRole').innerText = lead.role === 'D' ? 'Dropshipper' : 'Supplier';
+            document.getElementById('noteModalText').value = lead.note || '';
+
+            const followup = leadFollowups[numId] || {};
+            modalSelectedQuickTag = followup.quickTag || '';
+            renderModalQuickTags(modalSelectedQuickTag);
+
+            const cbInput = document.getElementById('noteModalCallbackTime');
+            cbInput.value = followup.callbackTime || '';
+
+            const dueBadge = document.getElementById('callbackDueBadge');
+            if (dueBadge) {
+                if (followup.callbackTime) {
+                    dueBadge.innerHTML = formatCallbackBadge(followup.callbackTime);
+                    dueBadge.classList.remove('hidden');
+                } else {
+                    dueBadge.classList.add('hidden');
+                }
+            }
+
+            const callBtn = document.getElementById('noteModalCallBtn');
+            if (callBtn) {
+                callBtn.onclick = () => triggerCall(lead.id, lead.phone);
+            }
+            const waBtn = document.getElementById('noteModalWaBtn');
+            if (waBtn) {
+                waBtn.onclick = () => triggerWhatsApp(lead.id, lead.phone, lead.status);
+            }
+
+            const modal = document.getElementById('noteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeNoteModal() {
+            const modal = document.getElementById('noteModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            currentNoteLeadId = null;
+        }
+
+        function renderModalQuickTags(selectedKey = '') {
+            modalSelectedQuickTag = selectedKey;
+            const container = document.getElementById('modalQuickTagContainer');
+            if (!container) return;
+
+            let html = Object.entries(FOLLOWUP_TAGS).map(([key, item]) => {
+                const isSelected = modalSelectedQuickTag === key;
+                const activeClass = isSelected
+                    ? 'ring-2 ring-indigo-500 border-indigo-500 font-bold shadow-sm ' + item.badgeClass
+                    : 'opacity-70 hover:opacity-100 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300';
+                return `
+                    <button type="button" onclick="selectModalQuickTag('${key}')" 
+                            class="p-2 rounded-xl text-xs flex items-center gap-1.5 transition text-left ${activeClass}">
+                        <i class="${item.icon}"></i>
+                        <span>${currentLang === 'bn' ? item.labelBn : item.labelEn}</span>
+                        ${isSelected ? '<i class="fa-solid fa-check ml-auto text-[10px]"></i>' : ''}
+                    </button>
+                `;
+            }).join('');
+
+            html += `
+                <button type="button" onclick="selectModalQuickTag('')" 
+                        class="p-2 rounded-xl text-xs flex items-center justify-center gap-1 text-slate-400 hover:text-rose-500 border border-dashed border-slate-300 dark:border-slate-700 hover:border-rose-400 transition">
+                    <i class="fa-solid fa-xmark"></i> <span>ট্যাগ মুছুন</span>
+                </button>
+            `;
+            container.innerHTML = html;
+        }
+
+        function selectModalQuickTag(key) {
+            modalSelectedQuickTag = (modalSelectedQuickTag === key ? '' : key);
+            renderModalQuickTags(modalSelectedQuickTag);
+        }
+
+        function insertNoteTimestamp() {
+            const textarea = document.getElementById('noteModalText');
+            if (!textarea) return;
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+            const stamp = `\n[${dateStr}, ${timeStr}]: `;
+            textarea.value = (textarea.value.trim() ? textarea.value.trim() + stamp : stamp.trimStart());
+            textarea.focus();
+        }
+
+        function setCallbackPreset(preset) {
+            const input = document.getElementById('noteModalCallbackTime');
+            if (!input) return;
+            if (preset === 'clear') {
+                input.value = '';
+                return;
+            }
+            const now = new Date();
+            if (preset === '1h') {
+                now.setHours(now.getHours() + 1);
+            } else if (preset === '3h') {
+                now.setHours(now.getHours() + 3);
+            } else if (preset === 'today_evening') {
+                now.setHours(17, 0, 0, 0);
+            } else if (preset === 'tomorrow_morning') {
+                now.setDate(now.getDate() + 1);
+                now.setHours(11, 0, 0, 0);
+            } else if (preset === 'tomorrow_afternoon') {
+                now.setDate(now.getDate() + 1);
+                now.setHours(16, 0, 0, 0);
+            }
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            input.value = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+        }
+
+        async function saveNoteModal() {
+            if (!currentNoteLeadId) return;
+            const numId = Number(currentNoteLeadId);
+            const lead = leads.find(l => Number(l.id) === numId);
+            if (!lead) return;
+
+            const newNote = document.getElementById('noteModalText').value.trim();
+            const callbackTime = document.getElementById('noteModalCallbackTime').value;
+
+            lead.note = newNote;
+            if (!leadFollowups[numId]) leadFollowups[numId] = {};
+            leadFollowups[numId].quickTag = modalSelectedQuickTag || '';
+            leadFollowups[numId].callbackTime = callbackTime || '';
+            leadFollowups[numId].updatedAt = new Date().toISOString();
+
+            saveLocalData();
+            saveLeadFollowups();
+            renderLeads();
+            closeNoteModal();
+
+            // Push to Supabase and Backup Cloud
+            apiSupabase(`leads?id=eq.${numId}`, 'PATCH', { note: newNote }).catch(e => console.warn("Supabase note update error:", e));
+            syncSettingsToCloud();
+        }
+
+        function toggleQuickTagMenu(event, leadId) {
+            event.stopPropagation();
+            closeAllQuickTagMenus();
+            const menu = document.getElementById(`quickTagMenu-${leadId}`);
+            if (menu) menu.classList.remove('hidden');
+        }
+
+        function closeAllQuickTagMenus() {
+            document.querySelectorAll('.quicktag-menu').forEach(el => el.classList.add('hidden'));
+        }
+
+        function setLeadQuickTag(leadId, tagKey) {
+            const numId = Number(leadId);
+            if (!leadFollowups[numId]) leadFollowups[numId] = {};
+            leadFollowups[numId].quickTag = (tagKey === 'clear' ? '' : tagKey);
+            leadFollowups[numId].updatedAt = new Date().toISOString();
+            saveLeadFollowups();
+            renderLeads();
+            closeAllQuickTagMenus();
+            syncSettingsToCloud();
+        }
+
+        let currentViewMode = localStorage.getItem(STORAGE_KEYS.viewMode) || 'table';
+
+        function toggleViewMode() {
+            currentViewMode = currentViewMode === 'table' ? 'card' : 'table';
+            localStorage.setItem(STORAGE_KEYS.viewMode, currentViewMode);
+            applyViewModeUI();
+            renderLeads();
+        }
+
+        function applyViewModeUI() {
+            const tableWrap = document.getElementById('leadTableWrapper');
+            const cardWrap = document.getElementById('leadCardsContainer');
+            const btnText = document.getElementById('viewToggleText');
+            const btnIcon = document.getElementById('viewToggleIcon');
+
+            if (currentViewMode === 'card') {
+                if (tableWrap) tableWrap.classList.add('hidden');
+                if (cardWrap) cardWrap.classList.remove('hidden');
+                if (btnText) btnText.innerText = currentLang === 'bn' ? 'টেবিল ভিউ' : 'Table View';
+                if (btnIcon) btnIcon.className = 'fa-solid fa-table-list';
+            } else {
+                if (tableWrap) tableWrap.classList.remove('hidden');
+                if (cardWrap) cardWrap.classList.add('hidden');
+                if (btnText) btnText.innerText = currentLang === 'bn' ? 'কার্ড ভিউ' : 'Card View';
+                if (btnIcon) btnIcon.className = 'fa-solid fa-table-cells';
+            }
+        }
+
+        function ensureTargetAudienceTags() {
+            const defaults = [
+                { id: 't_perf_marketer', name: '🎯 পারফরম্যান্স মার্কেটার' },
+                { id: 't_agency', name: '🏢 মার্কেটিং এজেন্সি' },
+                { id: 't_shopify_dev', name: '🛍️ Shopify/Web ডেভেলপার' },
+                { id: 't_automation', name: '⚡ API ও অটোমেশন' },
+                { id: 't_consultant', name: '📈 ই-কমার্স কনসালট্যান্ট' }
+            ];
+            let modified = false;
+            defaults.forEach(def => {
+                if (!tags.some(t => t.id === def.id || t.name === def.name)) {
+                    tags.push(def);
+                    modified = true;
+                }
+            });
+            if (modified) {
+                saveLocalData();
+            }
+        }
+
         // ─── Called Leads State (persisted + synced) ───────────────────────
         let calledLeadIds = new Set();
 
@@ -943,10 +1597,12 @@
                 const targetSettings = getTargetSettings();
                 const dailyActivities = getDailyActivities();
                 const calledArr = [...calledLeadIds];
+                const followups = getLeadFollowups();
                 const payload = JSON.stringify({
                     targetSettings,
                     dailyActivities,
                     calledLeadIds: calledArr,
+                    leadFollowups: followups,
                     updatedAt: new Date().toISOString()
                 });
 
@@ -964,6 +1620,7 @@
                     backupData.targetSettings = targetSettings;
                     backupData.dailyActivities = dailyActivities;
                     backupData.calledLeadIds = calledArr;
+                    backupData.leadFollowups = followups;
                     backupData.lastSync = new Date().toISOString();
                     apiBackupCloudPut(backupData).catch(() => {});
                 }
@@ -1328,6 +1985,11 @@
                                 parsed.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
                                 saveCalledLeadIds();
                             }
+                            // Merge leadFollowups
+                            if (parsed.leadFollowups && typeof parsed.leadFollowups === 'object') {
+                                leadFollowups = { ...leadFollowups, ...parsed.leadFollowups };
+                                saveLeadFollowups();
+                            }
                         } catch (pe) {
                             console.warn('sys_settings parse error:', pe);
                         }
@@ -1385,6 +2047,10 @@
                         if (Array.isArray(backupData.calledLeadIds)) {
                             backupData.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
                             saveCalledLeadIds();
+                        }
+                        if (backupData.leadFollowups && typeof backupData.leadFollowups === 'object') {
+                            leadFollowups = { ...leadFollowups, ...backupData.leadFollowups };
+                            saveLeadFollowups();
                         }
                     }
                 }
@@ -1458,7 +2124,8 @@
                     tags: tags,
                     targetSettings: getTargetSettings(),
                     dailyActivities: getDailyActivities(),
-                    calledLeadIds: [...calledLeadIds]
+                    calledLeadIds: [...calledLeadIds],
+                    leadFollowups: getLeadFollowups()
                 };
                 apiBackupCloudPut(backupPayload).then(ok => {
                     if (ok) cloudStatus.backupOnline = true;
@@ -1483,6 +2150,9 @@
             tags = local.tags;
             leads = local.leads;
             calledLeadIds = getCalledLeadIds();
+            leadFollowups = getLeadFollowups();
+            ensureTargetAudienceTags();
+            applyViewModeUI();
             renderTags();
             renderLeads();
             updateChart();
@@ -1800,7 +2470,8 @@
         }
 
         function openEditModal(leadId) {
-            const lead = leads.find(l => l.id === leadId);
+            const numId = Number(leadId);
+            const lead = leads.find(l => Number(l.id) === numId);
             if (!lead) return;
 
             document.getElementById('editLeadId').value = lead.id;
@@ -1809,6 +2480,12 @@
             document.getElementById('editRoleSelect').value = lead.role || 'D';
             document.getElementById('editStatusSelect').value = lead.status || 'blue';
             document.getElementById('editNoteInput').value = lead.note || '';
+
+            const followup = leadFollowups[numId] || {};
+            const qSelect = document.getElementById('editQuickTagSelect');
+            if (qSelect) qSelect.value = followup.quickTag || '';
+            const cbInput = document.getElementById('editCallbackInput');
+            if (cbInput) cbInput.value = followup.callbackTime || '';
 
             const editTagSelect = document.getElementById('editTagSelect');
             editTagSelect.innerHTML = tags.filter(t => !String(t.id).startsWith('sys_')).map(t => `<option value="${t.id}">🏷️ ${t.name}</option>`).join('');
@@ -1839,7 +2516,15 @@
                 recordContactActivity(id);
             }
 
-            leads = leads.map(l => l.id === id ? {
+            const quickTag = document.getElementById('editQuickTagSelect') ? document.getElementById('editQuickTagSelect').value : '';
+            const callbackTime = document.getElementById('editCallbackInput') ? document.getElementById('editCallbackInput').value : '';
+            if (!leadFollowups[id]) leadFollowups[id] = {};
+            leadFollowups[id].quickTag = quickTag;
+            leadFollowups[id].callbackTime = callbackTime;
+            leadFollowups[id].updatedAt = new Date().toISOString();
+            saveLeadFollowups();
+
+            leads = leads.map(l => Number(l.id) === id ? {
                 ...l,
                 phone,
                 page,
@@ -1854,6 +2539,7 @@
             updateChart();
             updateTargetProgress();
             closeEditModal();
+            syncSettingsToCloud();
 
             // Send update to Supabase
             apiSupabase(`leads?id=eq.${id}`, 'PATCH', {
@@ -1958,125 +2644,296 @@
 
         function renderLeads() {
             const tableBody = document.getElementById('leadTableBody');
-            const filterTag = document.getElementById('filterTag').value;
-            const filterRole = document.getElementById('filterRole').value;
+            const cardContainer = document.getElementById('leadCardsContainer');
+            const filterTag = document.getElementById('filterTag') ? document.getElementById('filterTag').value : 'ALL';
+            const filterRole = document.getElementById('filterRole') ? document.getElementById('filterRole').value : 'ALL';
+            const filterFollowupEl = document.getElementById('filterFollowup');
+            const filterFollowup = filterFollowupEl ? filterFollowupEl.value : 'ALL';
 
             let filtered = leads.filter(l => {
                 const matchTag = filterTag === 'ALL' || l.tagId === filterTag;
                 const matchRole = filterRole === 'ALL' || l.role === filterRole;
-                return matchTag && matchRole;
+
+                let matchFollowup = true;
+                const followup = leadFollowups[Number(l.id)] || {};
+                if (filterFollowup !== 'ALL') {
+                    if (filterFollowup === 'has_callback') {
+                        matchFollowup = Boolean(followup.callbackTime);
+                    } else if (filterFollowup === 'today_callback') {
+                        if (!followup.callbackTime) matchFollowup = false;
+                        else {
+                            const d = new Date(followup.callbackTime);
+                            matchFollowup = !isNaN(d.getTime()) && d.toDateString() === (new Date()).toDateString();
+                        }
+                    } else {
+                        matchFollowup = followup.quickTag === filterFollowup;
+                    }
+                }
+
+                return matchTag && matchRole && matchFollowup;
             });
 
             if (filtered.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400 dark:text-slate-500">${translations[currentLang].noData}</td></tr>`;
+                const emptyMsg = `<tr><td colspan="9" class="p-6 text-center text-slate-400 dark:text-slate-500">${translations[currentLang].noData}</td></tr>`;
+                if (tableBody) tableBody.innerHTML = emptyMsg;
+                if (cardContainer) cardContainer.innerHTML = `<div class="col-span-full p-6 text-center text-slate-400 dark:text-slate-500">${translations[currentLang].noData}</div>`;
                 return;
             }
 
-            tableBody.innerHTML = filtered.map(l => {
-                const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
-                const colorClass = getTagColor(tagObj.id);
-                const platformInfo = parsePlatformUrl(l.page);
-                const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
-                const statusLabel = currentLang === 'bn' ? status.labelBn : status.labelEn;
+            // 1. Render Table Rows
+            if (tableBody) {
+                tableBody.innerHTML = filtered.map(l => {
+                    const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
+                    const colorClass = getTagColor(tagObj.id);
+                    const platformInfo = parsePlatformUrl(l.page);
+                    const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
+                    const statusLabel = currentLang === 'bn' ? status.labelBn : status.labelEn;
+                    const followup = leadFollowups[Number(l.id)] || {};
+                    const isCalled = calledLeadIds.has(Number(l.id));
+                    const fTag = FOLLOWUP_TAGS[followup.quickTag];
 
-                return `
-                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition">
-                        <td class="p-3 text-center">
-                            <button onclick="toggleRole(${l.id})" 
-                                    class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center mx-auto ${
+                    return `
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition border-b border-slate-100 dark:border-slate-700/80">
+                            <!-- Role -->
+                            <td class="p-3 text-center">
+                                <button onclick="toggleRole(${l.id})" 
+                                        class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center mx-auto ${
+                                            l.role === 'D' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700' : 'bg-purple-800 text-white border-purple-900'
+                                        }">
+                                    ${l.role}
+                                </button>
+                            </td>
+
+                            <!-- Phone -->
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white whitespace-nowrap">${l.phone}</td>
+
+                            <!-- Status Symbol -->
+                            <td class="p-3 text-center relative">
+                                <div class="inline-block relative">
+                                    <button onclick="toggleStatusDropdown(event, ${l.id})" 
+                                            class="w-8 h-8 rounded-lg font-bold text-xs shadow-sm transition border flex items-center justify-center mx-auto hover:scale-105 active:scale-95 ${status.btnClass}" 
+                                            title="${statusLabel} - ${translations[currentLang].clickToChange}">
+                                        ${status.symbol}
+                                    </button>
+                                    <div id="statusMenu-${l.id}" class="status-menu hidden absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-40 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 flex gap-1.5 backdrop-blur">
+                                        <button onclick="changeStatus(${l.id}, 'blue')" title="${translations[currentLang].stNew}" 
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 transition">
+                                            <i class="fa-solid fa-bolt"></i>
+                                        </button>
+                                        <button onclick="changeStatus(${l.id}, 'yellow')" title="${translations[currentLang].stContacted}" 
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 transition">
+                                            <i class="fa-solid fa-comments"></i>
+                                        </button>
+                                        <button onclick="changeStatus(${l.id}, 'green')" title="${translations[currentLang].stConverted}" 
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 transition">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </button>
+                                        <button onclick="changeStatus(${l.id}, 'red')" title="${translations[currentLang].stCancelled}" 
+                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-700 transition">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Call & WhatsApp -->
+                            <td class="p-3 whitespace-nowrap">
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="triggerCall(${l.id}, '${l.phone}')" 
+                                        title="${isCalled ? (currentLang === 'bn' ? 'কল করা হয়েছে (রিসেট করতে ক্লিক করুন)' : 'Called (click to reset)') : (currentLang === 'bn' ? 'কল করুন' : 'Call')}"
+                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-xs border transition ${
+                                            isCalled 
+                                            ? 'bg-sky-500 hover:bg-sky-600 text-white border-sky-600 shadow-sky-500/25 shadow-sm' 
+                                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+                                        }">
+                                        <i class="fa-solid fa-phone text-[10px]"></i>
+                                    </button>
+                                    <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" 
+                                            class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm transition">
+                                       <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                                    </button>
+                                </div>
+                            </td>
+
+                            <!-- 1-Click Permanent Follow-up Tag -->
+                            <td class="p-3 relative whitespace-nowrap">
+                                <div class="inline-block relative">
+                                    ${fTag ? `
+                                        <button onclick="toggleQuickTagMenu(event, ${l.id})" 
+                                                class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-lg border transition shadow-2xs hover:scale-105 ${fTag.badgeClass}"
+                                                title="ফলো-আপ ট্যাগ পরিবর্তন করতে ক্লিক করুন">
+                                            <i class="${fTag.icon} text-[10px]"></i>
+                                            <span>${currentLang === 'bn' ? fTag.labelBn : fTag.labelEn}</span>
+                                        </button>
+                                    ` : `
+                                        <button onclick="toggleQuickTagMenu(event, ${l.id})" 
+                                                class="text-[11px] font-medium px-2 py-0.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 hover:border-indigo-400 transition flex items-center gap-1"
+                                                title="ফলো-আপ ট্যাগ যুক্ত করুন">
+                                            <i class="fa-solid fa-plus text-[9px]"></i>
+                                            <span>ট্যাগ</span>
+                                        </button>
+                                    `}
+                                    <div id="quickTagMenu-${l.id}" class="quicktag-menu hidden absolute left-0 top-full mt-1 z-40 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl p-2 w-48 space-y-1 backdrop-blur text-left">
+                                        <p class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase px-1 pb-1 border-b dark:border-slate-700">ফলো-আপ ট্যাগ নির্বাচন</p>
+                                        ${Object.entries(FOLLOWUP_TAGS).map(([k, itm]) => `
+                                            <button onclick="setLeadQuickTag(${l.id}, '${k}')" 
+                                                    class="w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition ${itm.badgeClass}">
+                                                <i class="${itm.icon} w-3.5 text-center"></i>
+                                                <span>${currentLang === 'bn' ? itm.labelBn : itm.labelEn}</span>
+                                            </button>
+                                        `).join('')}
+                                        <button onclick="setLeadQuickTag(${l.id}, 'clear')" 
+                                                class="w-full text-left px-2 py-1 rounded-lg text-[11px] text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-1.5 transition">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                                            <span>ট্যাগ রিমুভ করুন</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Social Link -->
+                            <td class="p-3 text-xs whitespace-nowrap">
+                                ${platformInfo ? 
+                                    `<a href="${platformInfo.href}" target="_blank" title="${platformInfo.fullUrl}" 
+                                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 transition">
+                                        ${platformInfo.icon} <span>${platformInfo.label}</span>
+                                     </a>` : `<span class="text-slate-400 dark:text-slate-500">—</span>`
+                                }
+                            </td>
+
+                            <!-- Category / Product Tag -->
+                            <td class="p-3 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
+                                    <i class="fa-solid fa-tag ${colorClass}"></i> ${tagObj.name}
+                                </span>
+                            </td>
+
+                            <!-- Clickable Note Cell & Callback Time -->
+                            <td class="p-3">
+                                <div onclick="openNoteModal(${l.id})" 
+                                     class="cursor-pointer group p-2 rounded-xl bg-slate-50 hover:bg-indigo-50/70 dark:bg-slate-700/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition min-w-[200px] max-w-[320px]">
+                                    <div class="flex items-center justify-between gap-1 text-[10px] text-slate-400 dark:text-slate-400 mb-1">
+                                        <span class="font-semibold text-slate-500 dark:text-slate-300 flex items-center gap-1">
+                                            <i class="fa-regular fa-note-sticky text-indigo-500"></i> নোট
+                                        </span>
+                                        <span class="text-indigo-600 dark:text-indigo-400 group-hover:underline flex items-center gap-0.5 font-medium">
+                                            <i class="fa-solid fa-pen-to-square text-[9px]"></i> বিস্তারিত ও এডিট
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-700 dark:text-slate-200 line-clamp-2 break-words leading-snug">
+                                        ${l.note ? escapeHtml(l.note) : '<span class="text-slate-400 italic font-normal">+ কোনো নোট নেই (ক্লিক করে লিখুন)...</span>'}
+                                    </p>
+                                    ${followup.callbackTime ? `<div class="mt-1.5">${formatCallbackBadge(followup.callbackTime)}</div>` : ''}
+                                </div>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="p-3 text-center whitespace-nowrap">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button onclick="openEditModal(${l.id})" class="text-indigo-500 hover:text-indigo-700 transition p-1" title="তথ্য পরিবর্তন করুন">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1" title="ডিলিট করুন">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // 2. Render Responsive Mobile/Tablet Cards
+            if (cardContainer) {
+                cardContainer.innerHTML = filtered.map(l => {
+                    const tagObj = tags.find(t => t.id === l.tagId) || { id: 'def', name: 'General' };
+                    const colorClass = getTagColor(tagObj.id);
+                    const platformInfo = parsePlatformUrl(l.page);
+                    const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
+                    const followup = leadFollowups[Number(l.id)] || {};
+                    const isCalled = calledLeadIds.has(Number(l.id));
+                    const fTag = FOLLOWUP_TAGS[followup.quickTag];
+
+                    return `
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 flex flex-col justify-between hover:shadow-md transition">
+                            <!-- Top: Role & Phone & Actions -->
+                            <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/80 pb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="toggleRole(${l.id})" class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center ${
                                         l.role === 'D' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700' : 'bg-purple-800 text-white border-purple-900'
                                     }">
-                                ${l.role}
-                            </button>
-                        </td>
-
-                        <td class="p-3 font-semibold text-slate-900 dark:text-white">${l.phone}</td>
-
-                        <!-- Status Column Directly After Phone Number (Smart Symbol & Color Coding) -->
-                        <td class="p-3 text-center relative">
-                            <div class="inline-block relative">
-                                <button onclick="toggleStatusDropdown(event, ${l.id})" 
-                                        class="w-8 h-8 rounded-lg font-bold text-xs shadow-sm transition border flex items-center justify-center mx-auto hover:scale-105 active:scale-95 ${status.btnClass}" 
-                                        title="${statusLabel} - ${translations[currentLang].clickToChange}">
-                                    ${status.symbol}
-                                </button>
-                                <div id="statusMenu-${l.id}" class="status-menu hidden absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-40 bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 flex gap-1.5 backdrop-blur">
-                                    <button onclick="changeStatus(${l.id}, 'blue')" title="${translations[currentLang].stNew}" 
-                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-blue-100 hover:bg-blue-200 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 transition">
-                                        <i class="fa-solid fa-bolt"></i>
+                                        ${l.role}
                                     </button>
-                                    <button onclick="changeStatus(${l.id}, 'yellow')" title="${translations[currentLang].stContacted}" 
-                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 transition">
-                                        <i class="fa-solid fa-comments"></i>
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white font-mono">${l.phone}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="openEditModal(${l.id})" class="w-7 h-7 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center text-xs transition" title="এডিট">
+                                        <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <button onclick="changeStatus(${l.id}, 'green')" title="${translations[currentLang].stConverted}" 
-                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 transition">
-                                        <i class="fa-solid fa-circle-check"></i>
-                                    </button>
-                                    <button onclick="changeStatus(${l.id}, 'red')" title="${translations[currentLang].stCancelled}" 
-                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-xs bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-700 transition">
-                                        <i class="fa-solid fa-circle-xmark"></i>
+                                    <button onclick="deleteLead(${l.id})" class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center text-xs transition" title="ডিলিট">
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </div>
                             </div>
-                        </td>
 
-                        <td class="p-3">
-                            <div class="flex items-center gap-1.5">
-                                ${(() => {
-                                    const isCalled = calledLeadIds.has(Number(l.id));
-                                    const callClass = isCalled
-                                        ? 'bg-sky-500 hover:bg-sky-600 text-white border-sky-600 shadow-sky-500/25 shadow-sm'
-                                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600';
-                                    return `<button onclick="triggerCall(${l.id}, '${l.phone}')" 
-                                        title="${isCalled ? (currentLang === 'bn' ? 'কল করা হয়েছে (আবার ক্লিক করলে রিসেট)' : 'Called (click to reset)') : (currentLang === 'bn' ? 'কল করুন' : 'Call')}"
-                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-xs border transition ${callClass}">
-                                        <i class="fa-solid fa-phone text-[10px]"></i>
-                                    </button>`;
-                                })()}
-                                <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" 
-                                        class="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-sm transition">
-                                   <i class="fa-brands fa-whatsapp text-xs"></i> WhatsApp
+                            <!-- Buttons: Call, WhatsApp, Status -->
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <button onclick="triggerCall(${l.id}, '${l.phone}')" class="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold border transition ${
+                                    isCalled ? 'bg-sky-500 text-white border-sky-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600'
+                                }">
+                                    <i class="fa-solid fa-phone text-xs"></i> <span>কল</span>
                                 </button>
+                                <button onclick="triggerWhatsApp(${l.id}, '${l.phone}', '${l.status}')" class="h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition shadow-sm">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i> <span>WhatsApp</span>
+                                </button>
+                                <div class="relative">
+                                    <button onclick="toggleStatusDropdown(event, ${l.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold border transition ${status.btnClass}">
+                                        ${status.symbol}
+                                    </button>
+                                </div>
                             </div>
-                        </td>
 
-                        <td class="p-3 text-xs whitespace-nowrap">
-                            ${platformInfo ? 
-                                `<a href="${platformInfo.href}" target="_blank" title="${platformInfo.fullUrl}" 
-                                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 transition">
-                                    ${platformInfo.icon} <span>${platformInfo.label}</span>
-                                 </a>` : `<span class="text-slate-400 dark:text-slate-500">—</span>`
-                            }
-                        </td>
-
-                        <td class="p-3">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
-                                <i class="fa-solid fa-tag ${colorClass}"></i> ${tagObj.name}
-                            </span>
-                        </td>
-
-                        <td class="p-3">
-                            <input type="text" 
-                                   value="${l.note || ''}" 
-                                   placeholder="+ ${translations[currentLang].lblNote}..." 
-                                   onchange="updateNote(${l.id}, this.value)"
-                                   class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-600 focus:border-indigo-400 rounded-md px-2 py-1 text-xs text-slate-700 dark:text-slate-100 outline-none transition">
-                        </td>
-
-                        <td class="p-3 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="openEditModal(${l.id})" class="text-indigo-500 hover:text-indigo-700 transition p-1" title="তথ্য পরিবর্তন করুন">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <button onclick="deleteLead(${l.id})" class="text-slate-400 hover:text-red-500 transition p-1" title="ডিলিট করুন">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
+                            <!-- Tags Row -->
+                            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                <!-- Follow-up Tag -->
+                                <div class="relative">
+                                    ${fTag ? `
+                                        <button onclick="toggleQuickTagMenu(event, ${l.id})" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg border ${fTag.badgeClass}">
+                                            <i class="${fTag.icon}"></i> <span>${currentLang === 'bn' ? fTag.labelBn : fTag.labelEn}</span>
+                                        </button>
+                                    ` : `
+                                        <button onclick="toggleQuickTagMenu(event, ${l.id})" class="text-[11px] font-medium px-2 py-1 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:text-indigo-600 flex items-center gap-1">
+                                            <i class="fa-solid fa-plus text-[9px]"></i> <span>ফলো-আপ ট্যাগ</span>
+                                        </button>
+                                    `}
+                                </div>
+                                <!-- Category -->
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
+                                    <i class="fa-solid fa-tag ${colorClass}"></i> ${tagObj.name}
+                                </span>
+                                <!-- Social Link -->
+                                ${platformInfo ? `<a href="${platformInfo.href}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 font-semibold">${platformInfo.icon} <span>${platformInfo.label}</span></a>` : ''}
                             </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+
+                            <!-- Clickable Note Box & Callback Badge -->
+                            <div onclick="openNoteModal(${l.id})" class="cursor-pointer group p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/70 dark:bg-slate-700/40 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-600 transition space-y-1.5">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                        <i class="fa-regular fa-note-sticky text-indigo-500"></i> নোট ও কথোপকথন
+                                    </span>
+                                    <span class="text-indigo-600 dark:text-indigo-400 group-hover:underline font-semibold flex items-center gap-0.5 text-[10px]">
+                                        <i class="fa-solid fa-pen-to-square text-[9px]"></i> দেখুন ও লিখুন
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-700 dark:text-slate-200 line-clamp-3 leading-relaxed">
+                                    ${l.note ? escapeHtml(l.note) : '<span class="text-slate-400 italic">+ কোনো নোট নেই (ক্লিক করে বিস্তারিত লিখুন)...</span>'}
+                                </p>
+                                ${followup.callbackTime ? `<div class="pt-0.5">${formatCallbackBadge(followup.callbackTime)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         function updateChart() {
@@ -2130,13 +2987,18 @@
                 alert(currentLang === 'bn' ? "ডাউনলোড করার মতো তথ্য নেই!" : "No data to export!");
                 return;
             }
-            let csv = "data:text/csv;charset=utf-8,Role,Phone,Status,WhatsApp Link,Page Link,Product Tag,Follow-up Note,Date\n";
+            let csv = "data:text/csv;charset=utf-8,Role,Phone,Status,Followup Tag,Callback Time,WhatsApp Link,Page Link,Category Tag,Follow-up Note,Date\n";
             leads.forEach(l => {
                 const tagObj = tags.find(t => t.id === l.tagId) || { name: '' };
                 const waUrl = `https://wa.me/${l.phone}`;
                 const status = STATUS_CONFIG[l.status] || STATUS_CONFIG.blue;
                 const statusName = currentLang === 'bn' ? status.labelBn : status.labelEn;
-                csv += `"${l.role === 'D' ? 'Dropshipper' : 'Supplier'}","${l.phone}","${statusName}","${waUrl}","${l.page || ''}","${tagObj.name}","${l.note || ''}","${l.createdAt}"\n`;
+                const followup = leadFollowups[Number(l.id)] || {};
+                const fTag = FOLLOWUP_TAGS[followup.quickTag];
+                const fTagName = fTag ? (currentLang === 'bn' ? fTag.labelBn : fTag.labelEn) : '';
+                const cbTime = followup.callbackTime ? followup.callbackTime.replace('T', ' ') : '';
+                const cleanNote = (l.note || '').replace(/"/g, '""');
+                csv += `"${l.role === 'D' ? 'Dropshipper' : 'Supplier'}","${l.phone}","${statusName}","${fTagName}","${cbTime}","${waUrl}","${l.page || ''}","${tagObj.name}","${cleanNote}","${l.createdAt}"\n`;
             });
             const link = document.createElement("a");
             link.href = encodeURI(csv);
