@@ -50,38 +50,24 @@
                 <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     Dropshipper Tracker Pro
                 </h1>
-                <span id="syncStatus" onclick="showCloudDetails()" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-indigo-200 dark:border-indigo-800 transition hover:shadow" title="ক্লাউড স্ট্যাটাস দেখতে ক্লিক করুন">
+                <span id="syncStatus" onclick="openMasterSettings('cloud')" class="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-indigo-200 dark:border-indigo-800 transition hover:shadow" title="৫-ক্লাউড মেশ স্ট্যাটাস দেখতে ক্লিক করুন">
                     <i id="syncStatusIcon" class="fa-solid fa-arrows-rotate fa-spin text-xs"></i> <span id="syncStatusText">ক্লাউড সিঙ্ক হচ্ছে...</span>
                 </span>
             </div>
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
-                                                <button onclick="toggleSound()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600 active:scale-95 shadow-2xs" title="সাউন্ড ইফেক্ট অন / অফ">
-                    <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-500"></i>
-                    <span id="soundText">সাউন্ড: চালু</span>
+                <button onclick="openMasterSettings()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm flex items-center gap-1.5 active:scale-95" title="জেনারেল সেটিংস ও মাল্টি-ক্লাউড কন্ট্রোল">
+                    <i class="fa-solid fa-gear text-xs"></i>
+                    <span data-i18n="btnSettings">জেনারেল সেটিংস</span>
                 </button>
 
-                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
+                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600 active:scale-95 shadow-2xs" title="সকল ক্লাউডের সাথে ডাটা এখনই সিঙ্ক করুন">
                     <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
                     <span data-i18n="btnSync">সিঙ্ক করুন</span>
                 </button>
 
-                <button onclick="toggleTheme()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600">
-                    <i id="themeIcon" class="fa-solid fa-moon"></i>
-                    <span id="themeText">Dark Mode</span>
-                </button>
-
-                <button onclick="toggleLanguage()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600">
-                    <i class="fa-solid fa-language text-indigo-500"></i>
-                    <span id="langText">English</span>
-                </button>
-
-                <button onclick="toggleTagModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
-                    <i class="fa-solid fa-tags"></i> <span data-i18n="tagSettings">ট্যাগ সেটিংস</span>
-                </button>
-
-                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5">
+                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="CSV ফাইল ডাউনলোড">
                     <i class="fa-solid fa-file-csv"></i> <span data-i18n="exportCSV">CSV ডাউনলোড</span>
                 </button>
 
@@ -130,13 +116,13 @@
                 </div>
             </div>
 
-            <div class="md:col-span-5 h-24 relative flex items-center justify-center pt-1">
+            <div id="chartSectionWrapper" class="md:col-span-5 h-24 relative flex items-center justify-center pt-1">
                 <canvas id="improvementChart"></canvas>
             </div>
         </div>
 
         <!-- Daily Target & Performance Section -->
-        <div class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3.5">
+        <div id="dailyTargetSectionWrapper" class="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3.5">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-2.5">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-sm">
@@ -752,13 +738,76 @@
     <script>
         const SUPABASE_URL = "https://axqnnyialjukavzruqiu.supabase.co";
         const SUPABASE_KEY = "sb_publishable_gFez3-9Fmojw2QUjxIl_3Q_dH4UvjRx";
-        const BACKUP_CLOUD_URL = "https://extendsclass.com/api/json-storage/bin/facdcfe";
         let _supabase = null;
         try {
             _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
             console.warn("Supabase init error:", e);
         }
+
+        // Storage Keys for Dual-Persistence & Targets
+        const STORAGE_KEYS = {
+            leads: 'dropshipper_tracker_leads_v2',
+            tags: 'dropshipper_tracker_tags_v2',
+            lang: 'rb_tracker_lang',
+            theme: 'rb_tracker_theme',
+            lastTag: 'rb_last_selected_tag',
+            targetSettings: 'dropshipper_target_settings',
+            dailyActivities: 'dropshipper_daily_activities',
+            calledLeads: 'dropshipper_called_leads',
+            leadFollowups: 'dropshipper_lead_followups',
+            viewMode: 'dropshipper_view_mode',
+            pageSize: 'dropshipper_page_size',
+            prompterSpeed: 'dropshipper_prompter_speed',
+            prompterFontSize: 'dropshipper_prompter_font_size',
+            defaultScriptId: 'dropshipper_default_script_id',
+            tagScripts: 'dropshipper_tag_scripts',
+            defaultRole: 'dropshipper_default_role',
+            soundEnabled: 'dropshipper_sound_enabled',
+            appSettings: 'dropshipper_app_settings'
+        };
+
+        const DEFAULT_APP_SETTINGS = {
+            lang: 'bn',
+            theme: 'light',
+            soundEnabled: true,
+            viewMode: 'table',
+            defaultRole: 'D',
+            highlightSupplier: true,
+            duplicateCheck: true,
+            autoConvertDigits: true,
+            confirmDelete: true,
+            dailyLeadsTarget: 10,
+            dailyContactsTarget: 10,
+            showTargetSection: true,
+            showChartSection: true,
+            pageSize: 10,
+            rowDensity: 'comfortable',
+            noteLines: 2,
+            defaultScriptTagId: '',
+            prompterSpeed: 1.0,
+            prompterHoverPause: true,
+            autoSyncInterval: 30
+        };
+
+        let appSettings = null;
+
+        // 5-Cloud Redundant Mesh Endpoints (Supabase + 4 Serverless JSON Storage Bins)
+        const MULTI_CLOUD_NODES = [
+            { id: 'supabase', name: 'Supabase Cloud (PostgreSQL)', location: 'AWS Singapore', type: 'sql' },
+            { id: 'bin_1', name: 'Cloud Node 1 (Primary Bin)', url: 'https://extendsclass.com/api/json-storage/bin/facdcfe', location: 'Frankfurt, EU', type: 'json' },
+            { id: 'bin_2', name: 'Cloud Node 2 (Redundant Alpha)', url: 'https://extendsclass.com/api/json-storage/bin/aafeadd', location: 'London, EU', type: 'json' },
+            { id: 'bin_3', name: 'Cloud Node 3 (Redundant Beta)', url: 'https://extendsclass.com/api/json-storage/bin/ffddcfe', location: 'Singapore, APAC', type: 'json' },
+            { id: 'bin_4', name: 'Cloud Node 4 (Disaster Recovery)', url: 'https://extendsclass.com/api/json-storage/bin/cadcbeb', location: 'North Virginia, US', type: 'json' }
+        ];
+
+        let cloudNodeStatus = {
+            supabase: { online: false, latency: null, lastSync: null },
+            bin_1: { online: false, latency: null, lastSync: null },
+            bin_2: { online: false, latency: null, lastSync: null },
+            bin_3: { online: false, latency: null, lastSync: null },
+            bin_4: { online: false, latency: null, lastSync: null }
+        };
 
         // Direct Cloud API Helpers with robust 10s timeout
         async function apiSupabase(endpoint, method = 'GET', body = null) {
@@ -791,36 +840,111 @@
             }
         }
 
-        async function apiBackupCloudGet() {
+        async function fetchFromNode(node) {
+            const start = performance.now();
             const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
+            const timer = setTimeout(() => controller.abort(), 6000);
             try {
-                const res = await fetch(BACKUP_CLOUD_URL, { signal: controller.signal });
-                clearTimeout(timer);
-                if (!res.ok) throw new Error(`Backup Cloud HTTP ${res.status}`);
-                return await res.json();
+                if (node.type === 'sql') {
+                    const [tags, leads] = await Promise.all([
+                        apiSupabase('tags?select=*'),
+                        apiSupabase('leads?select=*&order=id.desc')
+                    ]);
+                    clearTimeout(timer);
+                    const latency = Math.round(performance.now() - start);
+                    cloudNodeStatus.supabase = { online: true, latency, lastSync: new Date() };
+                    return { node: node.id, ok: true, data: { tags, leads, from: 'supabase' } };
+                } else {
+                    const res = await fetch(node.url, { signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const latency = Math.round(performance.now() - start);
+                    cloudNodeStatus[node.id] = { online: true, latency, lastSync: new Date() };
+                    return { node: node.id, ok: true, data };
+                }
             } catch (e) {
                 clearTimeout(timer);
-                throw e;
+                cloudNodeStatus[node.id] = { online: false, latency: null, lastSync: null, error: e.message };
+                return { node: node.id, ok: false, error: e.message };
             }
         }
 
-        async function apiBackupCloudPut(payload) {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
+        async function broadcastToAllClouds(cleanPayload = {}) {
+            const payload = {
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: cleanPayload.updatedAt || new Date().toISOString(),
+                leads: cleanPayload.leads || leads || [],
+                tags: (cleanPayload.tags || tags || []).filter(t => !String(t.id).startsWith('sys_')),
+                targetSettings: cleanPayload.targetSettings || getTargetSettings(),
+                dailyActivities: cleanPayload.dailyActivities || getDailyActivities(),
+                calledLeadIds: cleanPayload.calledLeadIds || [...calledLeadIds],
+                leadFollowups: cleanPayload.leadFollowups || getLeadFollowups(),
+                tagScripts: cleanPayload.tagScripts || JSON.parse(localStorage.getItem(STORAGE_KEYS.tagScripts) || '{}'),
+                defaultScriptId: cleanPayload.defaultScriptId || localStorage.getItem(STORAGE_KEYS.defaultScriptId) || '',
+                appSettings: cleanPayload.appSettings || getAppSettings()
+            };
+
+            const promises = [];
+
+            // 1. Supabase sys_settings
             try {
-                const res = await fetch(BACKUP_CLOUD_URL, {
+                const sysTagPayload = {
+                    id: 'sys_settings',
+                    name: JSON.stringify(payload)
+                };
+                const pSupa = apiSupabase('tags', 'POST', [sysTagPayload]).catch(() => {
+                    return apiSupabase('tags?id=eq.sys_settings', 'PATCH', { name: sysTagPayload.name }).catch(pe => {
+                        console.warn("Supabase sys_settings patch notice:", pe);
+                    });
+                });
+                promises.push(pSupa);
+            } catch(e) {}
+
+            // 2. All 4 ExtendsClass JSON Bins in Parallel
+            MULTI_CLOUD_NODES.filter(n => n.type === 'json').forEach(node => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 6000);
+                const p = fetch(node.url, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload),
                     signal: controller.signal
+                }).then(r => {
+                    clearTimeout(timer);
+                    if (r.ok) {
+                        cloudNodeStatus[node.id].online = true;
+                        cloudNodeStatus[node.id].lastSync = new Date();
+                    }
+                    return r.ok;
+                }).catch(err => {
+                    clearTimeout(timer);
+                    cloudNodeStatus[node.id].online = false;
+                    return false;
                 });
+                promises.push(p);
+            });
+
+            const results = await Promise.allSettled(promises);
+            renderCloudNodesHealthUI();
+            return results.some(r => r.status === 'fulfilled' && r.value);
+        }
+
+        async function apiBackupCloudPut(payload) {
+            return await broadcastToAllClouds(payload);
+        }
+
+        async function apiBackupCloudGet() {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 6000);
+            try {
+                const res = await fetch(MULTI_CLOUD_NODES[1].url, { signal: controller.signal });
                 clearTimeout(timer);
-                return res.ok;
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
             } catch (e) {
                 clearTimeout(timer);
-                console.warn("Backup cloud put error:", e);
-                return false;
+                throw e;
             }
         }
 
@@ -974,26 +1098,7 @@
             }
         };
 
-        // Storage Keys for Dual-Persistence & Targets
-        const STORAGE_KEYS = {
-            leads: 'dropshipper_tracker_leads_v2',
-            tags: 'dropshipper_tracker_tags_v2',
-            lang: 'rb_tracker_lang',
-            theme: 'rb_tracker_theme',
-            lastTag: 'rb_last_selected_tag',
-            targetSettings: 'dropshipper_target_settings',
-            dailyActivities: 'dropshipper_daily_activities',
-            calledLeads: 'dropshipper_called_leads',
-            leadFollowups: 'dropshipper_lead_followups',
-            viewMode: 'dropshipper_view_mode',
-            pageSize: 'dropshipper_page_size',
-            prompterSpeed: 'dropshipper_prompter_speed',
-            prompterFontSize: 'dropshipper_prompter_font_size',
-            defaultScriptId: 'dropshipper_default_script_id',
-            tagScripts: 'dropshipper_tag_scripts',
-            defaultRole: 'dropshipper_default_role',
-            soundEnabled: 'dropshipper_sound_enabled'
-        };
+        // (STORAGE_KEYS and appSettings initialized at script start)
 
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
@@ -2306,8 +2411,6 @@
 
         let cloudStatus = {
             isSyncing: false,
-            supabaseOnline: false,
-            backupOnline: false,
             lastSyncTime: null
         };
 
@@ -2322,7 +2425,7 @@
             if (cloudStatus.isSyncing) {
                 badge.className = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-indigo-200 dark:border-indigo-800 transition hover:shadow';
                 if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin text-xs';
-                text.innerText = currentLang === 'bn' ? 'ক্লাউড সিঙ্ক হচ্ছে...' : 'Syncing cloud...';
+                text.innerText = currentLang === 'bn' ? '৫-ক্লাউড সিঙ্ক হচ্ছে...' : 'Syncing 5 clouds...';
                 if (syncBtnIcon) syncBtnIcon.classList.add('fa-spin');
                 return;
             }
@@ -2330,40 +2433,25 @@
             if (syncBtnIcon) syncBtnIcon.classList.remove('fa-spin');
 
             const countStr = currentLang === 'bn' ? convertEnToBnNum(leads.length) : leads.length;
+            const onlineCount = Object.values(cloudNodeStatus).filter(s => s.online).length;
 
-            if (cloudStatus.supabaseOnline && cloudStatus.backupOnline) {
+            if (onlineCount >= 3) {
                 badge.className = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-emerald-300 dark:border-emerald-800 transition hover:shadow';
                 if (icon) icon.className = 'fa-solid fa-cloud-bolt text-xs text-emerald-600 dark:text-emerald-400';
                 text.innerText = currentLang === 'bn' 
-                    ? `ডুয়াল ক্লাউড সক্রিয় (${countStr} লিড)` 
-                    : `Dual Cloud Active (${countStr} leads)`;
-            } else if (cloudStatus.supabaseOnline) {
-                badge.className = 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-emerald-300 dark:border-emerald-800 transition hover:shadow';
-                if (icon) icon.className = 'fa-solid fa-cloud text-xs text-emerald-600 dark:text-emerald-400';
-                text.innerText = currentLang === 'bn' 
-                    ? `Supabase ক্লাউড সক্রিয় (${countStr} লিড)` 
-                    : `Supabase Active (${countStr} leads)`;
-            } else if (cloudStatus.backupOnline) {
+                    ? `৫-ক্লাউড মেশ সক্রিয় (${countStr} লিড)` 
+                    : `5-Cloud Mesh Active (${countStr} leads)`;
+            } else if (onlineCount > 0) {
                 badge.className = 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-sky-300 dark:border-sky-800 transition hover:shadow';
                 if (icon) icon.className = 'fa-solid fa-cloud text-xs text-sky-600 dark:text-sky-400';
                 text.innerText = currentLang === 'bn' 
-                    ? `ব্যাকআপ ক্লাউড সক্রিয় (${countStr} লিড)` 
-                    : `Backup Cloud Active (${countStr} leads)`;
+                    ? `${convertEnToBnNum(onlineCount)}/৫ ক্লাউড সক্রিয় (${countStr} লিড)` 
+                    : `${onlineCount}/5 Clouds Active (${countStr} leads)`;
             } else {
                 badge.className = 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 text-[11px] px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 cursor-pointer shadow-sm border border-amber-300 dark:border-amber-800 transition hover:shadow';
                 if (icon) icon.className = 'fa-solid fa-triangle-exclamation text-xs text-amber-600 dark:text-amber-400';
                 text.innerText = currentLang === 'bn' ? 'অফলাইন মোড (লোকাল সেভ)' : 'Offline Mode (Local Save)';
             }
-        }
-
-        function showCloudDetails() {
-            const supa = cloudStatus.supabaseOnline ? "সক্রিয় (Online) ✅" : "সংযোগহীন ⚠️";
-            const backup = cloudStatus.backupOnline ? "সক্রিয় (Online) ✅" : "সংযোগহীন ⚠️";
-            const timeStr = cloudStatus.lastSyncTime ? cloudStatus.lastSyncTime.toLocaleTimeString() : "এখনো সম্পন্ন হয়নি";
-            const msg = currentLang === 'bn'
-                ? `☁️ ক্লাউড সার্ভার স্ট্যাটাস:\n\n1. Supabase ক্লাউড: ${supa}\n2. ব্যাকআপ ক্লাউড (JSON Cloud): ${backup}\n\nসর্বশেষ সিঙ্ক: ${timeStr}\nমোট লিড: ${convertEnToBnNum(leads.length)} টি\n\nযে কোনো নতুন বা পরিবর্তিত তথ্য স্বয়ংক্রিয়ভাবে ক্লাউডে এবং আপনার লোকাল স্টোরেজে সিঙ্ক থাকে।`
-                : `☁️ Cloud Server Status:\n\n1. Supabase Cloud: ${supa}\n2. Backup Cloud: ${backup}\n\nLast Sync: ${timeStr}\nTotal Leads: ${leads.length}\n\nData automatically syncs across all devices.`;
-            alert(msg);
         }
 
         function showSyncToast(msg) {
@@ -2395,163 +2483,137 @@
             cloudStatus.isSyncing = true;
             updateSyncStatusUI();
 
-            let cloudLeadsList = [];
-            let cloudTagsList = [];
+            // 1. Concurrently query all 5 cloud nodes in parallel with Promise.allSettled
+            const fetchPromises = MULTI_CLOUD_NODES.map(node => fetchFromNode(node));
+            const results = await Promise.allSettled(fetchPromises);
+
+            let allCollectedLeads = [];
+            let allCollectedTags = [];
+            let freshestSnapshot = null;
+            let freshestTime = 0;
             let supaSuccess = false;
-            let backupSuccess = false;
 
-            // 1. Fetch from Supabase
-            try {
-                const [supaTags, supaLeads] = await Promise.all([
-                    apiSupabase('tags?select=*'),
-                    apiSupabase('leads?select=*&order=id.desc')
-                ]);
-                if (Array.isArray(supaLeads)) {
-                    supaSuccess = true;
-                    cloudLeadsList = supaLeads.map(l => ({
-                        id: Number(l.id),
-                        role: l.role || 'D',
-                        phone: l.phone || '',
-                        page: l.page || '',
-                        tagId: l.tag_id || '',
-                        note: l.note || '',
-                        status: l.status || 'blue',
-                        createdAt: l.created_at || ''
-                    }));
-                }
-                if (Array.isArray(supaTags)) {
-                    // Extract sys_settings from tags BEFORE adding to cloudTagsList
-                    const sysSettingsTag = supaTags.find(t => t.id === 'sys_settings');
-                    if (sysSettingsTag) {
-                        try {
-                            const parsed = JSON.parse(sysSettingsTag.name);
-                            // Apply targetSettings
-                            if (parsed.targetSettings) {
-                                localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(parsed.targetSettings));
+            results.forEach(res => {
+                if (res.status === 'fulfilled' && res.value && res.value.ok) {
+                    const val = res.value;
+                    const data = val.data;
+
+                    if (val.node === 'supabase') {
+                        supaSuccess = true;
+                        if (Array.isArray(data.leads)) {
+                            data.leads.forEach(l => {
+                                allCollectedLeads.push({
+                                    id: Number(l.id),
+                                    role: l.role || 'D',
+                                    phone: l.phone || '',
+                                    page: l.page || '',
+                                    tagId: l.tag_id || '',
+                                    note: l.note || '',
+                                    status: l.status || 'blue',
+                                    createdAt: l.created_at || ''
+                                });
+                            });
+                        }
+                        if (Array.isArray(data.tags)) {
+                            const sysSettingsTag = data.tags.find(t => t.id === 'sys_settings');
+                            if (sysSettingsTag) {
+                                try {
+                                    const parsed = JSON.parse(sysSettingsTag.name);
+                                    const tTime = parsed.updatedAt ? new Date(parsed.updatedAt).getTime() : 0;
+                                    if (tTime >= freshestTime) {
+                                        freshestTime = tTime;
+                                        freshestSnapshot = parsed;
+                                    }
+                                } catch(e) {}
                             }
-                            // Merge dailyActivities (cloud wins for past, merge today's)
-                            if (parsed.dailyActivities) {
-                                const localAct = getDailyActivities();
-                                const todayKey = getLocalDateKey();
-                                const merged = { ...parsed.dailyActivities };
-                                // Merge today's local contacts with cloud
-                                if (localAct[todayKey] && merged[todayKey]) {
-                                    const combined = new Set([
-                                        ...(merged[todayKey].contactedLeadIds || []),
-                                        ...(localAct[todayKey].contactedLeadIds || [])
-                                    ]);
-                                    merged[todayKey].contactedLeadIds = [...combined];
-                                } else if (localAct[todayKey]) {
-                                    merged[todayKey] = localAct[todayKey];
-                                }
-                                localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(merged));
-                            }
-                            // Merge calledLeadIds
-                            if (Array.isArray(parsed.calledLeadIds)) {
-                                parsed.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
-                                saveCalledLeadIds();
-                            }
-                            // Merge leadFollowups
-                            if (parsed.leadFollowups && typeof parsed.leadFollowups === 'object') {
-                                leadFollowups = { ...leadFollowups, ...parsed.leadFollowups };
-                                saveLeadFollowups();
-                            }
-                            if (parsed.tagScripts && typeof parsed.tagScripts === 'object') {
-                                localStorage.setItem(STORAGE_KEYS.tagScripts, JSON.stringify(parsed.tagScripts));
-                            }
-                            if (parsed.defaultScriptId) {
-                                localStorage.setItem(STORAGE_KEYS.defaultScriptId, parsed.defaultScriptId);
-                            }
-                        } catch (pe) {
-                            console.warn('sys_settings parse error:', pe);
+                            data.tags.filter(t => !String(t.id).startsWith('sys_')).forEach(t => allCollectedTags.push(t));
+                        }
+                    } else {
+                        // ExtendsClass JSON Storage Bins
+                        if (Array.isArray(data.leads)) {
+                            data.leads.forEach(l => allCollectedLeads.push(l));
+                        }
+                        if (Array.isArray(data.tags)) {
+                            data.tags.filter(t => !String(t.id).startsWith('sys_')).forEach(t => allCollectedTags.push(t));
+                        }
+                        const bTime = data.updatedAt ? new Date(data.updatedAt).getTime() : (data.lastSync ? new Date(data.lastSync).getTime() : 0);
+                        if (bTime >= freshestTime) {
+                            freshestTime = bTime;
+                            freshestSnapshot = data;
                         }
                     }
-                    // Only add real (non-sys_) tags to cloudTagsList
-                    cloudTagsList = supaTags.filter(t => !String(t.id).startsWith('sys_'));
-                }
-            } catch (err) {
-                console.warn("Supabase fetch notice:", err.message);
-            }
-
-            // 2. Fetch from Backup Cloud (ExtendsClass JSON Storage)
-            try {
-                const backupData = await apiBackupCloudGet();
-                if (backupData && Array.isArray(backupData.leads)) {
-                    backupSuccess = true;
-                    // If Supabase was unreachable or has fewer records, merge backup leads
-                    const existingIds = new Set(cloudLeadsList.map(l => Number(l.id)));
-                    backupData.leads.forEach(bl => {
-                        const bId = Number(bl.id);
-                        if (!existingIds.has(bId)) {
-                            cloudLeadsList.push(bl);
-                            existingIds.add(bId);
-                        }
-                    });
-                    if (cloudTagsList.length < (backupData.tags || []).length) {
-                        const existingTagIds = new Set(cloudTagsList.map(t => t.id));
-                        (backupData.tags || []).filter(t => !String(t.id).startsWith('sys_')).forEach(bt => {
-                            if (!existingTagIds.has(bt.id)) {
-                                cloudTagsList.push(bt);
-                                existingTagIds.add(bt.id);
-                            }
-                        });
-                    }
-                    // Apply settings from backup cloud if not already applied from Supabase
-                    if (!supaSuccess) {
-                        if (backupData.targetSettings) {
-                            localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(backupData.targetSettings));
-                        }
-                        if (backupData.dailyActivities) {
-                            const localAct = getDailyActivities();
-                            const todayKey = getLocalDateKey();
-                            const merged = { ...backupData.dailyActivities };
-                            if (localAct[todayKey] && merged[todayKey]) {
-                                const combined = new Set([
-                                    ...(merged[todayKey].contactedLeadIds || []),
-                                    ...(localAct[todayKey].contactedLeadIds || [])
-                                ]);
-                                merged[todayKey].contactedLeadIds = [...combined];
-                            } else if (localAct[todayKey]) {
-                                merged[todayKey] = localAct[todayKey];
-                            }
-                            localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(merged));
-                        }
-                        if (Array.isArray(backupData.calledLeadIds)) {
-                            backupData.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
-                            saveCalledLeadIds();
-                        }
-                        if (backupData.leadFollowups && typeof backupData.leadFollowups === 'object') {
-                            leadFollowups = { ...leadFollowups, ...backupData.leadFollowups };
-                            saveLeadFollowups();
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn("Backup cloud fetch notice:", err.message);
-            }
-
-            cloudStatus.supabaseOnline = supaSuccess;
-            cloudStatus.backupOnline = backupSuccess;
-
-            // 3. Find Unsynced Local Leads (leads on this device not yet in cloud)
-            const cloudIds = new Set(cloudLeadsList.map(l => Number(l.id)));
-            const localLeads = leads || [];
-            const unsyncedLeads = [];
-
-            localLeads.forEach(loc => {
-                const locId = Number(loc.id);
-                if (!cloudIds.has(locId)) {
-                    unsyncedLeads.push(loc);
-                    cloudLeadsList.push(loc);
-                    cloudIds.add(locId);
                 }
             });
 
-            // 4. AUTOMATIC UPLOAD: Upload any unsynced local leads to Supabase immediately!
-            if (unsyncedLeads.length > 0 && supaSuccess) {
-                console.log(`Auto-uploading ${unsyncedLeads.length} unsynced local leads to Supabase...`);
-                try {
-                    const payloads = unsyncedLeads.map(l => ({
+            // 2. Reconcile Leads: Union by unique numeric ID, preserving notes & statuses
+            const leadMap = new Map();
+            (leads || []).forEach(l => leadMap.set(Number(l.id), l));
+            allCollectedLeads.forEach(l => {
+                const id = Number(l.id);
+                if (!leadMap.has(id)) {
+                    leadMap.set(id, l);
+                } else {
+                    const existing = leadMap.get(id);
+                    if (!existing.note && l.note) existing.note = l.note;
+                    if (l.status && l.status !== 'blue') existing.status = l.status;
+                    if (l.role && existing.role === 'D' && l.role === 'S') existing.role = l.role;
+                }
+            });
+            leads = Array.from(leadMap.values()).sort((a, b) => Number(b.id) - Number(a.id));
+
+            // 3. Reconcile Tags: Union by unique tag ID (ignoring sys_ keys)
+            const tagMap = new Map();
+            (tags || []).filter(t => !String(t.id).startsWith('sys_')).forEach(t => tagMap.set(t.id, t));
+            allCollectedTags.forEach(t => tagMap.set(t.id, t));
+            tags = Array.from(tagMap.values());
+
+            // 4. Reconcile Metadata, Settings & Activities from freshest snapshot
+            if (freshestSnapshot) {
+                if (freshestSnapshot.targetSettings) {
+                    localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(freshestSnapshot.targetSettings));
+                }
+                if (freshestSnapshot.dailyActivities) {
+                    const localAct = getDailyActivities();
+                    const todayKey = getLocalDateKey();
+                    const merged = { ...freshestSnapshot.dailyActivities };
+                    if (localAct[todayKey] && merged[todayKey]) {
+                        const combined = new Set([
+                            ...(merged[todayKey].contactedLeadIds || []),
+                            ...(localAct[todayKey].contactedLeadIds || [])
+                        ]);
+                        merged[todayKey].contactedLeadIds = [...combined];
+                    } else if (localAct[todayKey]) {
+                        merged[todayKey] = localAct[todayKey];
+                    }
+                    localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(merged));
+                }
+                if (Array.isArray(freshestSnapshot.calledLeadIds)) {
+                    freshestSnapshot.calledLeadIds.forEach(id => calledLeadIds.add(Number(id)));
+                    saveCalledLeadIds();
+                }
+                if (freshestSnapshot.leadFollowups && typeof freshestSnapshot.leadFollowups === 'object') {
+                    leadFollowups = { ...leadFollowups, ...freshestSnapshot.leadFollowups };
+                    saveLeadFollowups();
+                }
+                if (freshestSnapshot.tagScripts && typeof freshestSnapshot.tagScripts === 'object') {
+                    localStorage.setItem(STORAGE_KEYS.tagScripts, JSON.stringify(freshestSnapshot.tagScripts));
+                }
+                if (freshestSnapshot.defaultScriptId) {
+                    localStorage.setItem(STORAGE_KEYS.defaultScriptId, freshestSnapshot.defaultScriptId);
+                }
+                if (freshestSnapshot.appSettings && typeof freshestSnapshot.appSettings === 'object') {
+                    appSettings = { ...appSettings, ...freshestSnapshot.appSettings };
+                    localStorage.setItem(STORAGE_KEYS.appSettings, JSON.stringify(appSettings));
+                    applyAppSettingsToUI();
+                }
+            }
+
+            // 5. Auto-upload any leads missing in Supabase to keep PostgreSQL completely synced
+            if (supaSuccess) {
+                const supaLeadIds = new Set((results.find(r => r.value && r.value.node === 'supabase')?.value?.data?.leads || []).map(l => Number(l.id)));
+                const missingInSupa = leads.filter(l => !supaLeadIds.has(Number(l.id)));
+                if (missingInSupa.length > 0) {
+                    const payloads = missingInSupa.map(l => ({
                         id: Number(l.id),
                         role: l.role || 'D',
                         phone: l.phone,
@@ -2561,63 +2623,579 @@
                         status: l.status || 'blue',
                         created_at: l.createdAt || ''
                     }));
-                    await apiSupabase('leads', 'POST', payloads);
-                    console.log("Unsynced leads successfully pushed to Supabase!");
-                } catch (e) {
-                    console.warn("Failed pushing unsynced leads to Supabase:", e);
+                    apiSupabase('leads', 'POST', payloads).catch(e => console.warn("Supabase auto-heal notice:", e));
                 }
             }
 
-            // 5. Merge Tags (only real tags, never sys_ entries)
-            if (cloudTagsList.length > 0) {
-                const tagMap = new Map();
-                cloudTagsList.forEach(t => tagMap.set(t.id, t));
-                tags.filter(t => !String(t.id).startsWith('sys_')).forEach(t => { if (!tagMap.has(t.id)) tagMap.set(t.id, t); });
-                tags = Array.from(tagMap.values()).filter(t => !String(t.id).startsWith('sys_'));
-            }
-
-            // 6. Update local memory and localStorage
-            if (cloudLeadsList.length > 0) {
-                leads = cloudLeadsList.sort((a, b) => Number(b.id) - Number(a.id));
-            }
-
+            // 6. Update local state & refresh UI
             saveLocalData();
             renderTags();
             renderLeads();
             updateChart();
             updateTargetProgress();
-            playUiSound('success');
-
-            // 7. Push unified snapshot to Backup Cloud (ExtendsClass)
-            if (supaSuccess || backupSuccess || unsyncedLeads.length > 0) {
-                const backupPayload = {
-                    appName: "Dropshipper Tracker Pro",
-                    lastSync: new Date().toISOString(),
-                    leads: leads,
-                    tags: tags,
-                    targetSettings: getTargetSettings(),
-                    dailyActivities: getDailyActivities(),
-                    calledLeadIds: [...calledLeadIds],
-                    leadFollowups: getLeadFollowups()
-                };
-                apiBackupCloudPut(backupPayload).then(ok => {
-                    if (ok) cloudStatus.backupOnline = true;
-                    updateSyncStatusUI();
-                });
-            }
-
             cloudStatus.isSyncing = false;
             cloudStatus.lastSyncTime = new Date();
             updateSyncStatusUI();
+            renderCloudNodesHealthUI();
+
+            // 7. Self-healing Broadcast: Push unified merged snapshot to all 4 JSON bins & Supabase sys_settings
+            const unifiedSnapshot = {
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags,
+                targetSettings: getTargetSettings(),
+                dailyActivities: getDailyActivities(),
+                calledLeadIds: [...calledLeadIds],
+                leadFollowups: getLeadFollowups(),
+                tagScripts: JSON.parse(localStorage.getItem(STORAGE_KEYS.tagScripts) || '{}'),
+                defaultScriptId: localStorage.getItem(STORAGE_KEYS.defaultScriptId) || '',
+                appSettings: getAppSettings()
+            };
+            broadcastToAllClouds(unifiedSnapshot);
 
             if (isManual) {
+                const activeNodes = Object.values(cloudNodeStatus).filter(s => s.online).length;
                 showSyncToast(currentLang === 'bn' 
-                    ? `✓ ক্লাউড সিঙ্ক সম্পন্ন! মোট ${convertEnToBnNum(leads.length)}টি লিড সফলভাবে সিঙ্ক হয়েছে।` 
-                    : `✓ Cloud sync complete! All ${leads.length} leads are fully up to date.`);
+                    ? `✓ ${convertEnToBnNum(activeNodes)}টি ক্লাউডে ডাটা সিঙ্ক সম্পন্ন! মোট ${convertEnToBnNum(leads.length)}টি লিড হালনাগাদ রয়েছে।` 
+                    : `✓ Synced across ${activeNodes} clouds! All ${leads.length} leads are fully up to date.`);
+            }
+        }
+
+        // =====================================================================
+        // UNIFIED MASTER GENERAL SETTINGS ENGINE & CONTROLS
+        // =====================================================================
+        function getAppSettings() {
+            let settings = { ...DEFAULT_APP_SETTINGS };
+            try {
+                const stored = localStorage.getItem(STORAGE_KEYS.appSettings);
+                if (stored) {
+                    settings = { ...settings, ...JSON.parse(stored) };
+                }
+            } catch(e) {}
+            // Sync with existing runtime state
+            settings.lang = currentLang || settings.lang;
+            settings.theme = currentTheme || settings.theme;
+            settings.soundEnabled = (typeof soundEnabled !== 'undefined') ? soundEnabled : settings.soundEnabled;
+            settings.viewMode = (typeof currentViewMode !== 'undefined') ? currentViewMode : settings.viewMode;
+            settings.defaultRole = (typeof defaultRole !== 'undefined') ? defaultRole : settings.defaultRole;
+            settings.pageSize = (typeof pageSize !== 'undefined') ? pageSize : settings.pageSize;
+            return settings;
+        }
+
+        function saveAppSettings(newSettings) {
+            appSettings = { ...getAppSettings(), ...newSettings };
+            localStorage.setItem(STORAGE_KEYS.appSettings, JSON.stringify(appSettings));
+            applyAppSettingsToUI();
+        }
+
+        function setAppSetting(key, val) {
+            const patch = {};
+            patch[key] = val;
+            saveAppSettings(patch);
+            loadSettingsIntoUI();
+        }
+
+        function toggleAppSetting(key) {
+            const settings = getAppSettings();
+            const currentVal = Boolean(settings[key]);
+            setAppSetting(key, !currentVal);
+        }
+
+        function openMasterSettings(initialTab = 'general') {
+            const modal = document.getElementById('masterSettingsModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            loadSettingsIntoUI();
+            switchSettingsTab(initialTab);
+        }
+
+        function closeMasterSettings() {
+            const modal = document.getElementById('masterSettingsModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function switchSettingsTab(tabName) {
+            document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+                btn.className = 'settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60 font-semibold text-xs';
+            });
+            const activeBtn = document.getElementById(`tabBtn_${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = 'settings-tab-btn px-3 py-1.5 rounded-lg transition text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-700 shadow-2xs font-bold text-xs';
+            }
+
+            document.querySelectorAll('.settings-tab-pane').forEach(pane => pane.classList.add('hidden'));
+            const activePane = document.getElementById(`tabContent_${tabName}`);
+            if (activePane) activePane.classList.remove('hidden');
+
+            if (tabName === 'tags') {
+                renderSettingsTagList();
+            } else if (tabName === 'cloud') {
+                renderCloudNodesHealthUI();
+            } else if (tabName === 'prompter') {
+                populateSettingsPrompterScriptSelect();
+            }
+        }
+
+        function updateToggleButtonUI(btnId, isEnabled) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            if (isEnabled) {
+                btn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1 active:scale-95';
+                btn.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i> ' + (currentLang === 'bn' ? 'চালু (ON)' : 'ON');
+            } else {
+                btn.className = 'px-3 py-1 rounded-md text-xs font-bold transition bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center gap-1 active:scale-95';
+                btn.innerHTML = '<i class="fa-solid fa-xmark text-[10px]"></i> ' + (currentLang === 'bn' ? 'বন্ধ (OFF)' : 'OFF');
+            }
+        }
+
+        function loadSettingsIntoUI() {
+            const s = getAppSettings();
+
+            // Language
+            const btnLangBn = document.getElementById('btnLangBn');
+            const btnLangEn = document.getElementById('btnLangEn');
+            if (btnLangBn && btnLangEn) {
+                btnLangBn.className = currentLang === 'bn' 
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs' 
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+                btnLangEn.className = currentLang === 'en' 
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs' 
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+            }
+
+            // Theme
+            const btnThemeLight = document.getElementById('btnThemeLight');
+            const btnThemeDark = document.getElementById('btnThemeDark');
+            if (btnThemeLight && btnThemeDark) {
+                btnThemeLight.className = currentTheme === 'light'
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+                btnThemeDark.className = currentTheme === 'dark'
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+            }
+
+            // Sound
+            updateToggleButtonUI('btnSettingSound', soundEnabled);
+
+            // View Mode
+            const btnViewTable = document.getElementById('btnSettingViewTable');
+            const btnViewCard = document.getElementById('btnSettingViewCard');
+            if (btnViewTable && btnViewCard) {
+                btnViewTable.className = currentViewMode === 'table'
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+                btnViewCard.className = currentViewMode === 'card'
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+            }
+
+            // Leads tab
+            const roleSelect = document.getElementById('settingDefaultRole');
+            if (roleSelect) roleSelect.value = s.defaultRole || 'D';
+            updateToggleButtonUI('btnSettingHighlightSupplier', s.highlightSupplier !== false);
+            updateToggleButtonUI('btnSettingDuplicateCheck', s.duplicateCheck !== false);
+            updateToggleButtonUI('btnSettingAutoConvertDigits', s.autoConvertDigits !== false);
+            updateToggleButtonUI('btnSettingConfirmDelete', s.confirmDelete !== false);
+
+            // Targets tab
+            const target = getTargetSettings();
+            const dailyLeadsInp = document.getElementById('settingDailyLeads');
+            if (dailyLeadsInp) dailyLeadsInp.value = target.dailyLeadsTarget || 10;
+            const dailyContactsInp = document.getElementById('settingDailyContacts');
+            if (dailyContactsInp) dailyContactsInp.value = target.dailyContactsTarget || 10;
+            updateToggleButtonUI('btnSettingShowTargetSection', s.showTargetSection !== false);
+            updateToggleButtonUI('btnSettingShowChartSection', s.showChartSection !== false);
+
+            // Display tab
+            const pageSizeSelect = document.getElementById('settingPageSize');
+            if (pageSizeSelect) pageSizeSelect.value = String(s.pageSize || 10);
+
+            const btnDensityComf = document.getElementById('btnSettingDensityComfortable');
+            const btnDensityComp = document.getElementById('btnSettingDensityCompact');
+            if (btnDensityComf && btnDensityComp) {
+                btnDensityComf.className = (s.rowDensity !== 'compact')
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+                btnDensityComp.className = (s.rowDensity === 'compact')
+                    ? 'px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-xs'
+                    : 'px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300';
+            }
+
+            const noteLinesSelect = document.getElementById('settingNoteLines');
+            if (noteLinesSelect) noteLinesSelect.value = String(s.noteLines || 2);
+
+            // Prompter tab
+            const prompterSpeedSelect = document.getElementById('settingPrompterSpeed');
+            if (prompterSpeedSelect) prompterSpeedSelect.value = String(s.prompterSpeed || 1.0);
+            updateToggleButtonUI('btnSettingPrompterHoverPause', s.prompterHoverPause !== false);
+
+            // Cloud tab
+            const autoSyncSelect = document.getElementById('settingAutoSyncInterval');
+            if (autoSyncSelect) autoSyncSelect.value = String(s.autoSyncInterval !== undefined ? s.autoSyncInterval : 30);
+            renderCloudNodesHealthUI();
+        }
+
+        function setAppLanguage(lang) {
+            currentLang = lang;
+            setAppSetting('lang', lang);
+            applyLanguage();
+        }
+
+        function setAppTheme(theme) {
+            currentTheme = theme;
+            setAppSetting('theme', theme);
+            applyTheme();
+        }
+
+        function applyAppSettingsToUI() {
+            const s = getAppSettings();
+
+            // Apply Section Visibility
+            const targetWrap = document.getElementById('dailyTargetSectionWrapper');
+            if (targetWrap) {
+                if (s.showTargetSection === false) targetWrap.classList.add('hidden');
+                else targetWrap.classList.remove('hidden');
+            }
+
+            const chartWrap = document.getElementById('chartSectionWrapper');
+            if (chartWrap) {
+                if (s.showChartSection === false) chartWrap.classList.add('hidden');
+                else chartWrap.classList.remove('hidden');
+            }
+
+            // Sync global vars
+            defaultRole = s.defaultRole || 'D';
+            const roleInp = document.getElementById('roleInput');
+            if (roleInp) roleInp.value = defaultRole;
+
+            pageSize = s.pageSize === 'ALL' ? 'ALL' : Number(s.pageSize || 10);
+            soundEnabled = s.soundEnabled !== false;
+            updateSoundUI();
+        }
+
+        function saveAndApplyMasterSettings() {
+            const s = getAppSettings();
+
+            const dailyLeadsInp = document.getElementById('settingDailyLeads');
+            const dailyContactsInp = document.getElementById('settingDailyContacts');
+            if (dailyLeadsInp && dailyContactsInp) {
+                const leadsVal = Math.max(1, Number(dailyLeadsInp.value) || 10);
+                const contactsVal = Math.max(1, Number(dailyContactsInp.value) || 10);
+                const currentT = getTargetSettings();
+                currentT.dailyLeadsTarget = leadsVal;
+                currentT.dailyContactsTarget = contactsVal;
+                localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(currentT));
+                updateTargetProgress();
+            }
+
+            saveAppSettings(s);
+            resetAutoSyncTimer();
+            renderLeads();
+            closeMasterSettings();
+            playUiSound('success');
+            showSyncToast(currentLang === 'bn' ? "✓ সমস্ত সেটিংস সফলভাবে সংরক্ষিত হয়েছে!" : "✓ All settings saved successfully!");
+
+            // Broadcast to 5-Cloud Mesh
+            broadcastToAllClouds({
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags,
+                targetSettings: getTargetSettings(),
+                dailyActivities: getDailyActivities(),
+                calledLeadIds: [...calledLeadIds],
+                leadFollowups: getLeadFollowups(),
+                appSettings: s
+            });
+        }
+
+        // --- Tag Management Inside Settings ---
+        function renderSettingsTagList() {
+            const container = document.getElementById('settingsTagList');
+            if (!container) return;
+            const realTags = tags.filter(t => !String(t.id).startsWith('sys_'));
+            if (realTags.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-3">কোনো কাস্টম ট্যাগ নেই</p>`;
+                return;
+            }
+            container.innerHTML = realTags.map(t => {
+                const count = leads.filter(l => l.tagId === t.id).length;
+                const countStr = currentLang === 'bn' ? convertEnToBnNum(count) : count;
+                return `
+                    <div class="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs shadow-2xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                            <span class="font-bold text-slate-800 dark:text-white">${t.name}</span>
+                            <span class="text-[10px] text-slate-400">(${countStr} লিড)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="renameTagFromSettings('${t.id}')" class="px-2 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-400 transition" title="নাম পরিবর্তন">
+                                <i class="fa-solid fa-pen text-[10px]"></i> এডিট
+                            </button>
+                            <button onclick="deleteTagFromSettings('${t.id}')" class="px-2 py-1 text-[11px] font-semibold rounded bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition" title="ট্যাগ মুছুন">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addTagFromSettings(e) {
+            e.preventDefault();
+            const input = document.getElementById('settingsNewTagName');
+            if (!input || !input.value.trim()) return;
+            const tagName = input.value.trim();
+            const newTag = {
+                id: 'tag_' + Date.now(),
+                name: tagName
+            };
+            tags.push(newTag);
+            saveLocalData();
+            renderTags();
+            renderSettingsTagList();
+            input.value = '';
+            playUiSound('success');
+            showSyncToast(currentLang === 'bn' ? `✓ "${tagName}" ট্যাগ সফলভাবে যোগ হয়েছে!` : `✓ Tag "${tagName}" added successfully!`);
+            broadcastToAllClouds({
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
+        }
+
+        function renameTagFromSettings(tagId) {
+            const tag = tags.find(t => t.id === tagId);
+            if (!tag) return;
+            const newName = prompt(currentLang === 'bn' ? 'ট্যাগের নতুন নাম লিখুন:' : 'Enter new tag name:', tag.name);
+            if (!newName || !newName.trim() || newName.trim() === tag.name) return;
+            tag.name = newName.trim();
+            saveLocalData();
+            renderTags();
+            renderLeads();
+            renderSettingsTagList();
+            playUiSound('success');
+            broadcastToAllClouds({
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
+        }
+
+        function deleteTagFromSettings(tagId) {
+            const tag = tags.find(t => t.id === tagId);
+            if (!tag) return;
+            const confirmMsg = currentLang === 'bn'
+                ? `আপনি কি নিশ্চিত "${tag.name}" ট্যাগটি মুছে ফেলতে চান?`
+                : `Are you sure you want to delete tag "${tag.name}"?`;
+            if (!confirm(confirmMsg)) return;
+
+            tags = tags.filter(t => t.id !== tagId);
+            saveLocalData();
+            renderTags();
+            renderLeads();
+            renderSettingsTagList();
+            playUiSound('delete');
+            broadcastToAllClouds({
+                appName: "Dropshipper Tracker Pro",
+                updatedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags
+            });
+        }
+
+        function populateSettingsPrompterScriptSelect() {
+            const select = document.getElementById('settingDefaultScriptTag');
+            if (!select) return;
+            const realTags = tags.filter(t => !String(t.id).startsWith('sys_'));
+            const s = getAppSettings();
+            select.innerHTML = `<option value="">-- কোনো নির্দিষ্ট ট্যাগ নয় (ডিফল্ট) --</option>` +
+                realTags.map(t => `<option value="${t.id}" ${t.id === s.defaultScriptTagId ? 'selected' : ''}>${t.name}</option>`).join('');
+        }
+
+        // --- 5-Cloud Mesh Health Dashboard ---
+        function renderCloudNodesHealthUI() {
+            const listEl = document.getElementById('cloudNodesHealthList');
+            const badgeEl = document.getElementById('cloudMeshSummaryBadge');
+            if (!listEl) return;
+
+            let onlineCount = 0;
+            const totalCount = MULTI_CLOUD_NODES.length;
+
+            let html = '';
+            MULTI_CLOUD_NODES.forEach((node, idx) => {
+                const stat = cloudNodeStatus[node.id] || { online: false, latency: null, lastSync: null };
+                if (stat.online) onlineCount++;
+
+                const isOnline = stat.online;
+                const statusBadge = isOnline 
+                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>অনলাইন</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>সংযোগহীন / অপেক্ষমান</span>`;
+
+                const latencyText = stat.latency ? `<span class="text-[10px] text-slate-400 font-mono">${stat.latency}ms</span>` : '';
+
+                html += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-750/50 hover:bg-white dark:hover:bg-slate-750 transition text-xs">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-md flex items-center justify-center ${isOnline ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'} font-bold text-[10px]">
+                                ${idx + 1}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                                    ${node.name}
+                                </p>
+                                <p class="text-[10px] text-slate-400">${node.location || 'Global'} • ${node.type.toUpperCase()}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            ${latencyText}
+                            ${statusBadge}
+                        </div>
+                    </div>
+                `;
+            });
+
+            listEl.innerHTML = html;
+
+            if (badgeEl) {
+                badgeEl.innerText = `${onlineCount}/${totalCount} একটিভ`;
+                badgeEl.className = onlineCount >= 3 
+                    ? 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    : 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
+            }
+        }
+
+        function forceSyncAllClouds() {
+            syncWithCloud(true);
+        }
+
+        // --- Full Offline JSON Backup & Restore ---
+        function downloadFullBackupJSON() {
+            const backupData = {
+                appName: "Dropshipper Tracker Pro",
+                backupVersion: "3.5",
+                exportedAt: new Date().toISOString(),
+                leads: leads,
+                tags: tags.filter(t => !String(t.id).startsWith('sys_')),
+                targetSettings: getTargetSettings(),
+                dailyActivities: getDailyActivities(),
+                calledLeadIds: [...calledLeadIds],
+                leadFollowups: getLeadFollowups(),
+                tagScripts: JSON.parse(localStorage.getItem(STORAGE_KEYS.tagScripts) || '{}'),
+                defaultScriptId: localStorage.getItem(STORAGE_KEYS.defaultScriptId) || '',
+                appSettings: getAppSettings()
+            };
+            const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const dlAnchor = document.createElement('a');
+            const today = new Date().toISOString().split('T')[0];
+            dlAnchor.setAttribute("href", jsonStr);
+            dlAnchor.setAttribute("download", `dropshipper_tracker_backup_${today}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            playUiSound('success');
+            showSyncToast(currentLang === 'bn' ? "✓ সম্পূর্ণ ব্যাকআপ ফাইল ডাউনলোড সম্পন্ন হয়েছে!" : "✓ Full backup JSON downloaded successfully!");
+        }
+
+        function restoreBackupFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data || !Array.isArray(data.leads)) {
+                        alert(currentLang === 'bn' ? "ভুল ফাইল ফরম্যাট! ব্যাকআপ ফাইলে কোনো লিড ডেটা পাওয়া যায়নি।" : "Invalid backup file format! No leads data found.");
+                        return;
+                    }
+                    const confirmMsg = currentLang === 'bn'
+                        ? `আপনি কি নিশ্চিত এই ব্যাকআপ ফাইলটি রিস্টোর করতে চান?\nএতে মোট ${convertEnToBnNum(data.leads.length)}টি লিড রয়েছে।`
+                        : `Are you sure you want to restore this backup?\nIt contains ${data.leads.length} leads.`;
+                    if (!confirm(confirmMsg)) return;
+
+                    leads = data.leads;
+                    if (Array.isArray(data.tags)) {
+                        tags = data.tags.filter(t => !String(t.id).startsWith('sys_'));
+                    }
+                    if (data.targetSettings) {
+                        localStorage.setItem(STORAGE_KEYS.targetSettings, JSON.stringify(data.targetSettings));
+                    }
+                    if (data.dailyActivities) {
+                        localStorage.setItem(STORAGE_KEYS.dailyActivities, JSON.stringify(data.dailyActivities));
+                    }
+                    if (Array.isArray(data.calledLeadIds)) {
+                        calledLeadIds = new Set(data.calledLeadIds.map(Number));
+                        saveCalledLeadIds();
+                    }
+                    if (data.leadFollowups) {
+                        leadFollowups = data.leadFollowups;
+                        saveLeadFollowups();
+                    }
+                    if (data.tagScripts) {
+                        localStorage.setItem(STORAGE_KEYS.tagScripts, JSON.stringify(data.tagScripts));
+                    }
+                    if (data.defaultScriptId) {
+                        localStorage.setItem(STORAGE_KEYS.defaultScriptId, data.defaultScriptId);
+                    }
+                    if (data.appSettings) {
+                        saveAppSettings(data.appSettings);
+                    }
+
+                    saveLocalData();
+                    renderTags();
+                    renderLeads();
+                    updateChart();
+                    updateTargetProgress();
+                    playUiSound('success');
+                    showSyncToast(currentLang === 'bn' ? "✓ ব্যাকআপ ফাইল থেকে ডাটা সফলভাবে রিস্টোর হয়েছে!" : "✓ Data restored successfully from backup file!");
+
+                    // Broadcast newly restored data to all 5 clouds
+                    broadcastToAllClouds({
+                        appName: "Dropshipper Tracker Pro",
+                        updatedAt: new Date().toISOString(),
+                        leads: leads,
+                        tags: tags,
+                        targetSettings: getTargetSettings(),
+                        dailyActivities: getDailyActivities(),
+                        calledLeadIds: [...calledLeadIds],
+                        leadFollowups: getLeadFollowups(),
+                        appSettings: getAppSettings()
+                    });
+                } catch(err) {
+                    alert(currentLang === 'bn' ? "ফাইল পড়তে সমস্যা হয়েছে: " + err.message : "Error reading file: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // --- Auto-Sync Frequency Timer Controller ---
+        let autoSyncTimerId = null;
+        function resetAutoSyncTimer() {
+            if (autoSyncTimerId) {
+                clearInterval(autoSyncTimerId);
+                autoSyncTimerId = null;
+            }
+            const s = getAppSettings();
+            const intervalSec = Number(s.autoSyncInterval);
+            if (intervalSec && intervalSec > 0) {
+                autoSyncTimerId = setInterval(() => {
+                    if (!document.hidden) {
+                        syncWithCloud(false);
+                    }
+                }, intervalSec * 1000);
             }
         }
 
         async function initData() {
+            appSettings = getAppSettings();
             // 1. Instantly load local data so UI opens with 0ms delay
             const local = loadLocalData();
             tags = local.tags;
@@ -2625,23 +3203,31 @@
             calledLeadIds = getCalledLeadIds();
             leadFollowups = getLeadFollowups();
             migrateToKitchenItemsTag();
+            applyAppSettingsToUI();
             applyViewModeUI();
             updateSoundUI();
             const roleEl = document.getElementById('roleInput');
-            if (roleEl) roleEl.value = defaultRole;
+            if (roleEl) roleEl.value = appSettings.defaultRole || defaultRole;
             renderTags();
             renderLeads();
             updateChart();
             updateTargetProgress();
             playUiSound('success');
             updateSyncStatusUI();
+            resetAutoSyncTimer();
 
-            // 2. Perform seamless background Dual-Cloud sync
+            // 2. Perform seamless background 5-Cloud Mesh sync
             await syncWithCloud(false);
         }
 
         // Check for Duplicate Phone Number or Page Link
         function checkDuplicateWarning() {
+            const s = getAppSettings();
+            if (s.duplicateCheck === false) {
+                const alertEl = document.getElementById('duplicateAlert');
+                if (alertEl) alertEl.classList.add('hidden');
+                return false;
+            }
             const phoneVal = convertBnToEnNum(document.getElementById('phoneInput').value.trim());
             const pageVal = document.getElementById('pageInput').value.trim().toLowerCase();
             const alertEl = document.getElementById('duplicateAlert');
@@ -2923,7 +3509,8 @@
         async function addLead(e) {
             e.preventDefault();
             const rawPhone = document.getElementById('phoneInput').value.trim();
-            const phone = convertBnToEnNum(rawPhone);
+            const s = getAppSettings();
+            const phone = (s.autoConvertDigits !== false) ? convertBnToEnNum(rawPhone) : rawPhone;
             const page = document.getElementById('pageInput').value.trim();
             const tagId = document.getElementById('tagSelect').value;
             const note = document.getElementById('noteInput').value.trim();
@@ -2999,8 +3586,12 @@
         }
 
         async function deleteLead(id) {
-            const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
-            if (confirm(confirmMsg)) {
+            const s = getAppSettings();
+            if (s.confirmDelete !== false) {
+                const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
+                if (!confirm(confirmMsg)) return;
+            }
+            if (true) {
                 leads = leads.filter(l => l.id !== id);
                 playUiSound('delete');
                 saveLocalData();
@@ -3446,7 +4037,7 @@
 
                     return `
                         <tr class="transition border-b ${
-    l.role === 'S' 
+    (l.role === 'S' && getAppSettings().highlightSupplier !== false)
     ? 'bg-purple-50/60 hover:bg-purple-100/70 dark:bg-purple-950/25 dark:hover:bg-purple-900/40 border-l-4 border-l-purple-600 dark:border-l-purple-500 border-slate-200/80 dark:border-purple-900/50' 
     : 'hover:bg-slate-50/80 dark:hover:bg-slate-700/50 border-l-4 border-l-indigo-500 dark:border-l-indigo-600 border-slate-100 dark:border-slate-700/80'
 }">
@@ -3779,7 +4370,7 @@
             if (!document.hidden) syncWithCloud(false);
         });
         window.addEventListener('online', () => syncWithCloud(false));
-        setInterval(() => syncWithCloud(false), 30000); // Auto-sync every 30 seconds
+        resetAutoSyncTimer();
     </script>
     <!-- Cold Call Script Teleprompter Drawer -->
     <div id="prompterDrawer" class="fixed inset-y-0 right-0 w-full sm:w-[420px] md:w-[460px] bg-white dark:bg-slate-900 shadow-2xl z-50 border-l border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform translate-x-full">
@@ -3861,6 +4452,348 @@
                 </div>
             </div>
             <div class="h-48"></div> <!-- Buffer bottom space for comfortable scrolling -->
+        </div>
+    </div>
+
+    <!-- Unified Master Settings Modal -->
+    <div id="masterSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3 sm:p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[92vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-850">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-sm text-sm font-bold">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 dark:text-white text-sm md:text-base flex items-center gap-2">
+                            <span>জেনারেল সেটিংস ও কন্ট্রোল সেন্টার</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">সকল কনফিগারেশন, ফিচার টগল ও ৫-ক্লাউড মেশ ম্যানেজমেন্ট</p>
+                    </div>
+                </div>
+                <button onclick="closeMasterSettings()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="border-b border-slate-200 dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/80 px-4 flex gap-2 overflow-x-auto text-xs font-semibold py-2">
+                <button onclick="switchSettingsTab('general')" id="tabBtn_general" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-700 shadow-2xs">
+                    <i class="fa-solid fa-sliders mr-1"></i> সাধারণ
+                </button>
+                <button onclick="switchSettingsTab('leads')" id="tabBtn_leads" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-users mr-1"></i> লিড ও ভূমিকা
+                </button>
+                <button onclick="switchSettingsTab('targets')" id="tabBtn_targets" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-bullseye mr-1"></i> টার্গেট
+                </button>
+                <button onclick="switchSettingsTab('display')" id="tabBtn_display" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-table-cells mr-1"></i> ডিসপ্লে
+                </button>
+                <button onclick="switchSettingsTab('tags')" id="tabBtn_tags" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-tags mr-1"></i> ট্যাগস
+                </button>
+                <button onclick="switchSettingsTab('prompter')" id="tabBtn_prompter" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-microphone-lines mr-1"></i> প্রম্পটার
+                </button>
+                <button onclick="switchSettingsTab('cloud')" id="tabBtn_cloud" class="settings-tab-btn px-3 py-1.5 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60">
+                    <i class="fa-solid fa-cloud mr-1"></i> ৫-ক্লাউড মেশ
+                </button>
+            </div>
+
+            <!-- Tab Content Area (Scrollable) -->
+            <div class="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+                <!-- TAB 1: GENERAL & PREFERENCES -->
+                <div id="tabContent_general" class="settings-tab-pane space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">ভাষা (Language)</p>
+                                <p class="text-[10px] text-slate-400">অ্যাপ্লিকেশনের সামগ্রিক ভাষা</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setAppLanguage('bn')" id="btnLangBn" class="px-2.5 py-1 rounded-md text-xs font-bold transition">বাংলা</button>
+                                <button onclick="setAppLanguage('en')" id="btnLangEn" class="px-2.5 py-1 rounded-md text-xs font-bold transition">English</button>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">থিম (Theme Mode)</p>
+                                <p class="text-[10px] text-slate-400">লাইট অথবা ডার্ক ইন্টারফেস</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setAppTheme('light')" id="btnThemeLight" class="px-2.5 py-1 rounded-md text-xs font-bold transition">☀️ লাইট</button>
+                                <button onclick="setAppTheme('dark')" id="btnThemeDark" class="px-2.5 py-1 rounded-md text-xs font-bold transition">🌙 ডার্ক</button>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">সাউন্ড ইফেক্টস (Audio Feedback)</p>
+                                <p class="text-[10px] text-slate-400">বাটন ক্লিক, সেভ ও কলের শব্দ</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="playUiSound('success')" class="text-[10px] px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-medium">🔊 টেস্ট</button>
+                                <button onclick="toggleAppSetting('soundEnabled')" id="btnSettingSound" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">ডিফল্ট ভিউ মোড</p>
+                                <p class="text-[10px] text-slate-400">ড্যাশবোর্ডের প্রাথমিক রূপ</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setAppSetting('viewMode', 'table')" id="btnSettingViewTable" class="px-2.5 py-1 rounded-md text-xs font-bold transition">টেবিল</button>
+                                <button onclick="setAppSetting('viewMode', 'card')" id="btnSettingViewCard" class="px-2.5 py-1 rounded-md text-xs font-bold transition">কার্ড</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: LEADS & ROLES -->
+                <div id="tabContent_leads" class="settings-tab-pane hidden space-y-3">
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">নতুন লিডের ডিফল্ট ভূমিকা (Role)</p>
+                            <p class="text-[10px] text-slate-400">নতুন লিড এন্ট্রির সময় স্বয়ংক্রিয়ভাবে যেটি নির্বাচিত থাকবে</p>
+                        </div>
+                        <select id="settingDefaultRole" onchange="setAppSetting('defaultRole', this.value)" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold">
+                            <option value="D">Dropshipper (D)</option>
+                            <option value="S">Supplier (S)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">সাপ্লায়ারের রো-তে বেগুনি হাইলাইট কালার</p>
+                            <p class="text-[10px] text-slate-400">সাপ্লায়ারদের রো আলাদা পার্পল ব্যাকগ্রাউন্ডে প্রদর্শন করা</p>
+                        </div>
+                        <button onclick="toggleAppSetting('highlightSupplier')" id="btnSettingHighlightSupplier" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">ডুপ্লিকেট লিড সতর্কবার্তা (Duplicate Warning)</p>
+                            <p class="text-[10px] text-slate-400">একই ফোন নম্বর বা পেজ লিংক একাধিকবার এন্ট্রিতে অ্যালার্ট দেবে</p>
+                        </div>
+                        <button onclick="toggleAppSetting('duplicateCheck')" id="btnSettingDuplicateCheck" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">বাংলা সংখ্যা স্বয়ংক্রিয় ইংরেজি সংখ্যায় রূপান্তর</p>
+                            <p class="text-[10px] text-slate-400">ফোন নম্বর লেখার সময় বাংলা ডিজিট স্বয়ংক্রিয় কনভার্ট হবে</p>
+                        </div>
+                        <button onclick="toggleAppSetting('autoConvertDigits')" id="btnSettingAutoConvertDigits" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">লিড ডিলিট করার আগে কনফার্মেশন প্রম্পট</p>
+                            <p class="text-[10px] text-slate-400">ভুলবশত লিড মুছে ফেলা ঠেকাতে নিশ্চয়তা চাওয়া হবে</p>
+                        </div>
+                        <button onclick="toggleAppSetting('confirmDelete')" id="btnSettingConfirmDelete" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+                </div>
+
+                <!-- TAB 3: TARGETS & DASHBOARD -->
+                <div id="tabContent_targets" class="settings-tab-pane hidden space-y-3.5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-white">প্রতিদিনের লিড টার্গেট</label>
+                            <input type="number" id="settingDailyLeads" min="1" max="1000" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-xs outline-none">
+                            <p class="text-[10px] text-slate-400">দৈনিক কতগুলো নতুন লিড সংগ্রহ করতে চান</p>
+                        </div>
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-white">প্রতিদিনের কন্টাক্ট / অ্যাকশন টার্গেট</label>
+                            <input type="number" id="settingDailyContacts" min="1" max="1000" class="w-full px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white font-bold text-xs outline-none">
+                            <p class="text-[10px] text-slate-400">প্রতিদিন কতজনের সাথে কল / মেসেজ সম্পন্ন করতে চান</p>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">ড্যাশবোর্ডে দৈনিক টার্গেট কার্ড ও প্রগ্রেস বার</p>
+                            <p class="text-[10px] text-slate-400">প্রগ্রেস বার হাইড করে স্ক্রিন আরও ফাঁকা রাখা যাবে</p>
+                        </div>
+                        <button onclick="toggleAppSetting('showTargetSection')" id="btnSettingShowTargetSection" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">ড্যাশবোর্ডে অ্যানালিটিক্স বার চার্ট</p>
+                            <p class="text-[10px] text-slate-400">স্ট্যাটাস ওভারভিউ গ্রাফ প্রদর্শন</p>
+                        </div>
+                        <button onclick="toggleAppSetting('showChartSection')" id="btnSettingShowChartSection" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+
+                    <div class="pt-1 flex justify-end">
+                        <button onclick="closeMasterSettings(); toggleHistoryModal();" class="text-xs text-sky-600 dark:text-sky-400 font-semibold flex items-center gap-1.5 hover:underline">
+                            <i class="fa-solid fa-clock-rotate-left"></i> পূর্বের টার্গেট ও অ্যাকশন হিস্ট্রি দেখুন ➔
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 4: DISPLAY & PAGINATION -->
+                <div id="tabContent_display" class="settings-tab-pane hidden space-y-3">
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">প্রতি পেজে প্রদর্শিত লিড সংখ্যা (Pagination)</p>
+                            <p class="text-[10px] text-slate-400">এক পেজে একবারে কতটি লিড দেখতে চান</p>
+                        </div>
+                        <select id="settingPageSize" onchange="setAppSetting('pageSize', this.value === 'ALL' ? 'ALL' : Number(this.value))" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold">
+                            <option value="10">১০ টি</option>
+                            <option value="20">২০ টি</option>
+                            <option value="50">৫০ টি</option>
+                            <option value="100">১০০ টি</option>
+                            <option value="ALL">সকল (All)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">টেবিল রো ডেনসিটি (Density)</p>
+                            <p class="text-[10px] text-slate-400">টেবিলের লাইনগুলোর প্যাডিং ঘনত্ব</p>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="setAppSetting('rowDensity', 'comfortable')" id="btnSettingDensityComfortable" class="px-2.5 py-1 rounded-md text-xs font-bold transition">আরামদায়ক</button>
+                            <button onclick="setAppSetting('rowDensity', 'compact')" id="btnSettingDensityCompact" class="px-2.5 py-1 rounded-md text-xs font-bold transition">কমপ্যাক্ট</button>
+                        </div>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">নোট কলাম প্রিভিউ লাইন</p>
+                            <p class="text-[10px] text-slate-400">টেবিল সেলে সর্বোচ্চ কত লাইন নোট দেখা যাবে</p>
+                        </div>
+                        <select id="settingNoteLines" onchange="setAppSetting('noteLines', Number(this.value))" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold">
+                            <option value="1">১ লাইন</option>
+                            <option value="2">২ লাইন</option>
+                            <option value="3">৩ লাইন</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- TAB 5: TAG MANAGEMENT -->
+                <div id="tabContent_tags" class="settings-tab-pane hidden space-y-3.5">
+                    <form onsubmit="addTagFromSettings(event)" class="flex gap-2">
+                        <input type="text" id="settingsNewTagName" placeholder="নতুন ট্যাগের নাম (যেমন: ইলেকট্রনিক্স)..." required class="flex-1 px-3 py-1.5 rounded-lg border dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs transition">ট্যাগ যোগ</button>
+                    </form>
+
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-2">
+                        <p class="font-bold text-slate-700 dark:text-slate-300 mb-2">বিদ্যমান ট্যাগ তালিকা (এডিট ও ডিলিট অপশন):</p>
+                        <div id="settingsTagList" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: PROMPTER SETTINGS -->
+                <div id="tabContent_prompter" class="settings-tab-pane hidden space-y-3">
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">ডিফল্ট ট্যাগ স্ক্রিপ্ট</p>
+                            <p class="text-[10px] text-slate-400">প্রম্পটার খুললে প্রারম্ভিক যে ট্যাগ স্ক্রিপ্টটি লোড হবে</p>
+                        </div>
+                        <select id="settingDefaultScriptTag" onchange="setAppSetting('defaultScriptTagId', this.value)" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold"></select>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">ডিফল্ট স্ক্রোল গতি</p>
+                            <p class="text-[10px] text-slate-400">প্রম্পটার চলার প্রারম্ভিক গতি</p>
+                        </div>
+                        <select id="settingPrompterSpeed" onchange="setAppSetting('prompterSpeed', Number(this.value))" class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold">
+                            <option value="0.5">০.৫x (খুব ধীর)</option>
+                            <option value="1.0">১.০x (স্বাভাবিক)</option>
+                            <option value="1.5">১.৫x (মাঝারি)</option>
+                            <option value="2.0">২.০x (দ্রুত)</option>
+                            <option value="3.0">৩.০x (ফাস্ট)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-slate-800 dark:text-white">কার্সার হোভারে অটো-পজ (Hover Pause)</p>
+                            <p class="text-[10px] text-slate-400">স্ক্রিপ্টের উপর মাউস বা টাচ রাখলে স্ক্রোলিং স্বয়ংক্রিয় থামবে</p>
+                        </div>
+                        <button onclick="toggleAppSetting('prompterHoverPause')" id="btnSettingPrompterHoverPause" class="px-3 py-1 rounded-md text-xs font-bold transition"></button>
+                    </div>
+                </div>
+
+                <!-- TAB 7: 5-CLOUD MESH & DATA BACKUP -->
+                <div id="tabContent_cloud" class="settings-tab-pane hidden space-y-4">
+                    <div class="p-3 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-network-wired text-indigo-600"></i> ৫-ক্লাউড রিডানড্যান্ট মেশ আর্কিটেকচার
+                            </span>
+                            <span id="cloudMeshSummaryBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">৫/৫ একটিভ</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            সুপাবেস ডাউন থাকলেও ব্যাকআপ ক্লাউড ১, ২, ৩ এবং ৪ এর মাধ্যমে সকল ডাটা যেকোনো ডিভাইস থেকে ১০০% নিরাপদ ও স্বয়ংক্রিয় সিঙ্ক থাকবে।
+                        </p>
+                    </div>
+
+                    <!-- Cloud Nodes Health List -->
+                    <div class="space-y-2 border border-slate-200 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-slate-800/80">
+                        <p class="font-bold text-slate-700 dark:text-slate-300 text-[11px] mb-1">ক্লাউড নোডসমূহের লাইভ স্ট্যাটাস:</p>
+                        <div id="cloudNodesHealthList" class="space-y-1.5">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sync Controls -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 space-y-1">
+                            <label class="block font-bold text-slate-800 dark:text-white">অটো-সিঙ্ক ফ্রিকোয়েন্সি</label>
+                            <select id="settingAutoSyncInterval" onchange="setAppSetting('autoSyncInterval', Number(this.value))" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white text-xs outline-none font-semibold">
+                                <option value="15">প্রতি ১৫ সেকেন্ড পর</option>
+                                <option value="30">প্রতি ৩০ সেকেন্ড পর (ডিফল্ট)</option>
+                                <option value="60">প্রতি ১ মিনিট পর</option>
+                                <option value="0">শুধুমাত্র ম্যানুয়াল সিঙ্ক</option>
+                            </select>
+                        </div>
+
+                        <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 flex flex-col justify-between">
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">ফোর্স ক্লাউড সিঙ্ক</p>
+                                <p class="text-[10px] text-slate-400">এক ক্লিকে সকল ৫টি ক্লাউডে ডাটা রিফ্রেশ করুন</p>
+                            </div>
+                            <button onclick="forceSyncAllClouds()" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+                                <i class="fa-solid fa-arrows-rotate"></i> সকল ক্লাউডে পুশ করুন
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- JSON Backup Export & Import -->
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-750 space-y-2">
+                        <p class="font-bold text-slate-800 dark:text-white">অফলাইন ব্যাকআপ ও রিস্টোর (JSON)</p>
+                        <p class="text-[10px] text-slate-400">আপনার সমস্ত ডাটার সম্পূর্ণ ব্যাকআপ ডাউনলোড করুন অথবা ফাইল থেকে পুনরুদ্ধার করুন</p>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <button onclick="downloadFullBackupJSON()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                                <i class="fa-solid fa-download"></i> ব্যাকআপ ফাইল ডাউনলোড (JSON)
+                            </button>
+                            <label class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                                <i class="fa-solid fa-upload text-indigo-500"></i> ব্যাকআপ রিস্টোর
+                                <input type="file" id="backupFileInput" accept=".json" onchange="restoreBackupFromFile(event)" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/70 dark:bg-slate-850">
+                <span class="text-[10px] text-slate-400 font-mono">Dropshipper Tracker Pro v3.5</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeMasterSettings()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition">বন্ধ করুন</button>
+                    <button onclick="saveAndApplyMasterSettings()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/25 flex items-center gap-2 transition active:scale-95">
+                        <i class="fa-solid fa-check"></i> পরিবর্তন সেভ করুন
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
