@@ -57,7 +57,12 @@
 
             <!-- Action Controls & Settings -->
             <div class="flex flex-wrap items-center gap-2">
-                                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
+                                                <button onclick="toggleSound()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-slate-200 dark:border-slate-600 active:scale-95 shadow-2xs" title="সাউন্ড ইফেক্ট অন / অফ">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-500"></i>
+                    <span id="soundText">সাউন্ড: চালু</span>
+                </button>
+
+                <button id="manualSyncBtn" onclick="triggerManualSync()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm flex items-center gap-1.5 active:scale-95" title="ক্লাউডের সাথে সকল ডাটা এখনই সিঙ্ক করুন">
                     <i id="manualSyncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
                     <span data-i18n="btnSync">সিঙ্ক করুন</span>
                 </button>
@@ -201,13 +206,20 @@
             <h2 class="text-sm font-semibold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
                 <i class="fa-solid fa-user-plus text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="addLeadHeader">নতুন লিড</span>
             </h2>
-            <form id="leadForm" onsubmit="addLead(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <form id="leadForm" onsubmit="addLead(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblRole">ডিফল্ট ভূমিকা</label>
+                    <select id="roleInput" onchange="setDefaultRole(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none font-semibold transition">
+                        <option value="D">Dropshipper (D)</option>
+                        <option value="S">Supplier (S)</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblPhone">ফোন নম্বর *</label>
                     <input type="text" id="phoneInput" placeholder="01941606310" required 
                            oninput="autoConvertPhone(this)"
                            onblur="checkDuplicateWarning()"
-                           class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
+                           class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none font-mono">
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblPage">পেজ বা ওয়েবসাইট লিংক</label>
@@ -217,7 +229,7 @@
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1" data-i18n="lblTag">প্রোডাক্ট ট্যাগ</label>
-                    <select id="tagSelect" onchange="rememberTag(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
+                    <select id="tagSelect" onchange="rememberTag(this.value)" class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none font-medium">
                     </select>
                 </div>
                 <div>
@@ -226,7 +238,7 @@
                            class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-indigo-500 text-xs outline-none">
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm">
+                    <button type="submit" id="saveBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-3 rounded-lg transition flex items-center justify-center gap-2 text-xs shadow-sm active:scale-95">
                         <i class="fa-solid fa-cloud-arrow-up"></i> <span data-i18n="btnAddLead">ক্লাউডে সেভ করুন</span>
                     </button>
                 </div>
@@ -812,6 +824,128 @@
             }
         }
 
+        // ─── Sound Effects Engine (Web Audio API - 100% Offline) ───────────
+        let soundEnabled = localStorage.getItem(STORAGE_KEYS.soundEnabled) !== 'false';
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtxClass) audioCtx = new AudioCtxClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem(STORAGE_KEYS.soundEnabled, soundEnabled);
+            updateSoundUI();
+            if (soundEnabled) {
+                playUiSound('success');
+            }
+        }
+
+        function updateSoundUI() {
+            const icon = document.getElementById('soundIcon');
+            const text = document.getElementById('soundText');
+            if (icon) {
+                icon.className = soundEnabled ? 'fa-solid fa-volume-high text-indigo-500' : 'fa-solid fa-volume-xmark text-slate-400';
+            }
+            if (text) {
+                text.innerText = soundEnabled 
+                    ? (currentLang === 'bn' ? 'সাউন্ড: চালু' : 'Sound: On') 
+                    : (currentLang === 'bn' ? 'সাউন্ড: বন্ধ' : 'Sound: Off');
+            }
+        }
+
+        function playUiSound(type = 'click') {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                } else if (type === 'success') {
+                    [523.25, 783.99].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const t = now + (i * 0.08);
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, t);
+                        gain.gain.setValueAtTime(0.1, t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(t);
+                        osc.stop(t + 0.18);
+                    });
+                } else if (type === 'call') {
+                    [440, 480].forEach(freq => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.25);
+                    });
+                } else if (type === 'action') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.06);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.06);
+                } else if (type === 'delete') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(320, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.12);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                }
+            } catch (e) {}
+        }
+
+        // Default Role Setting
+        let defaultRole = localStorage.getItem(STORAGE_KEYS.defaultRole) || 'D';
+
+        function setDefaultRole(role) {
+            defaultRole = role;
+            localStorage.setItem(STORAGE_KEYS.defaultRole, role);
+            const roleEl = document.getElementById('roleInput');
+            if (roleEl && roleEl.value !== role) roleEl.value = role;
+            playUiSound('action');
+        }
+
         // Status Smart Symbols & Action-Aligned Color Coding
         const STATUS_CONFIG = {
             blue: {
@@ -856,7 +990,9 @@
             prompterSpeed: 'dropshipper_prompter_speed',
             prompterFontSize: 'dropshipper_prompter_font_size',
             defaultScriptId: 'dropshipper_default_script_id',
-            customScripts: 'dropshipper_custom_scripts'
+            tagScripts: 'dropshipper_tag_scripts',
+            defaultRole: 'dropshipper_default_role',
+            soundEnabled: 'dropshipper_sound_enabled'
         };
 
         // PWA Service Worker Registration
@@ -1574,178 +1710,95 @@
         }
 
         function ensureTargetAudienceTags() {
-            const defaults = [
-                { id: 't_perf_marketer', name: '🎯 পারফরম্যান্স মার্কেটার' },
-                { id: 't_agency', name: '🏢 মার্কেটিং এজেন্সি' },
-                { id: 't_shopify_dev', name: '🛍️ Shopify/Web ডেভেলপার' },
-                { id: 't_automation', name: '⚡ API ও অটোমেশন' },
-                { id: 't_consultant', name: '📈 ই-কমার্স কনসালট্যান্ট' }
-            ];
-            let modified = false;
-            defaults.forEach(def => {
-                if (!tags.some(t => t.id === def.id || t.name === def.name)) {
-                    tags.push(def);
-                    modified = true;
-                }
-            });
-            if (modified) {
-                saveLocalData();
-            }
+            // Replaced by tag-based cold call scripts and kitchen items migration
+            migrateToKitchenItemsTag();
         }
 
-        // ─── Cold Call Teleprompter Engine & Script Library ───────────────
-        const DEFAULT_CALL_SCRIPTS = {
-            perf_marketer: {
-                id: 'perf_marketer',
-                titleBn: '🎯 স্বাধীন পারফরম্যান্স মার্কেটার / মিডিয়া বায়ার',
-                titleEn: '🎯 Performance Marketers / Media Buyers',
-                text: `[শুরু - কুশল বিনিময়]
-"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে তুসার বলছি। আপনার কি ২ মিনিট কথা বলার সময় হবে?"
-
-[হুক / সমস্যা সনাক্তকরণ]
-"আপনার অ্যাডভার্টাইজিং এবং মিডিয়া বায়িং ক্যাম্পেইনের পারফরম্যান্স বেশ ভালো দেখছি। আমরা মার্কেটারদের সাথে কথা বলে যেটা দেখেছি—মার্কেটারদের সবচেয়ে বড় সমস্যা হলো ক্লায়েন্টদের নিজস্ব প্রোডাক্ট সোর্সিং বা ডেলিভারির অবকাঠামো থাকে না। যার ফলে অ্যাড ভালো চললেও সাপ্লাই সমস্যার কারণে অনেক ক্লায়েন্ট ড্রপ আউট হয়ে যায়।"
-
-[আমাদের ভ্যালু অফার]
-"আমাদের প্ল্যাটফর্মে আপনি ভেরিফায়েড ড্রপশিপার ও নির্ভরযোগ্য সাপ্লায়ার নেটওয়ার্কের ডিরেক্ট সাপোর্ট পাচ্ছেন। অর্থাৎ ক্লায়েন্টের স্টক আউটের কোনো ঝুঁকি নেই। আপনি ক্লায়েন্টদের উইনিং প্রোডাক্ট দিতে পারবেন আর নিশ্চিন্তে অ্যাড স্কেল করতে পারবেন।"
-
-[কল টু অ্যাকশন / পরবর্তী পদক্ষেপ]
-"আপনার কি এমন কোনো রানিং ক্লায়েন্ট আছে যাদের জন্য নির্ভরযোগ্য প্রোডাক্ট সাপোর্ট দরকার? তাহলে আমরা তাদের সরাসরি কানেক্ট করে দিতে পারি।"`
-            },
-            agency: {
-                id: 'agency',
-                titleBn: '🏢 ডিজিটাল মার্কেটিং এজেন্সি',
-                titleEn: '🏢 Digital Marketing Agencies',
-                text: `[শুরু]
-"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি। এজেন্সির বর্তমান ই-কমার্স প্রজেক্ট নিয়ে কি ১ মিনিট কথা বলা যাবে?"
-
-[মূল বিষয়বস্তু]
-"আমরা জানি একটা মার্কেটিং এজেন্সির জন্য ক্লায়েন্টদের ফুল-স্ট্যাক ই-কমার্স সুবিধা দেওয়া এখন অত্যন্ত জরুরি। অনেক এজেন্সিরই ড্রপশিপার ক্লায়েন্ট আছে যারা প্রোডাক্ট সোর্সিং ও ডেলিভারি জটিলতায় সঠিক সময়ে অর্ডার কমপ্লিট করতে পারে না।"
-
-[অফার]
-"আমাদের এজেন্সি পার্টনারশিপ প্রোগ্রামের আওতায় আপনি আপনার ক্লায়েন্টদের কমপ্লিট ড্রপশিপিং ট্র্যাকিং ও ভেরিফায়েড সাপ্লাই চেইন সলিউশন দিতে পারবেন কোনো নিজস্ব ইনভেন্টরি ছাড়াই।"
-
-[ক্লোজিং]
-"আমরা কি আপনার এজেন্সির সাথে একটা ছোট পার্টনারশিপ কল শিডিউল করতে পারি?"`
-            },
-            shopify_dev: {
-                id: 'shopify_dev',
-                titleBn: '🛍️ Shopify / WooCommerce ডেভেলপার',
-                titleEn: '🛍️ Shopify / WooCommerce Developers',
-                text: `[শুরু]
-"আসসালামু আলাইকুম ভাইয়া, Shopify এবং ই-কমার্স স্টোর ডেভেলপমেন্টে আপনার কাজ বেশ চমৎকার। আমি ড্রপশিপার ট্র্যাকার থেকে বলছি।"
-
-[সমস্যা]
-"স্টোর ডিজাইন ও ডেভেলপমেন্টের পরই ক্লায়েন্টদের সবচেয়ে বড় চ্যালেঞ্জ তৈরি হয়—তারা নির্ভরযোগ্য প্রোডাক্ট কোথায় পাবে এবং অর্ডার কীভাবে ট্র্যাক করবে।"
-
-[অফার]
-"আমাদের ট্র্যাকিং প্ল্যাটফর্ম ও প্রোডাক্ট নেটওয়ার্ক আপনার তৈরি করা স্টোরের ক্লায়েন্টদের জন্য সরাসরি কানেক্ট করা সম্ভব। এতে আপনার ক্লায়েন্টরা স্টোর ডেলিভারির পরই রেডি প্রোডাক্ট নিয়ে কাজ শুরু করতে পারবে।"
-
-[পরবর্তী পদক্ষেপ]
-"আপনার কি বর্তমানে কোনো সক্রিয় ই-কমার্স ক্লায়েন্ট আছে যাদের প্রোডাক্ট সাপোর্ট প্রয়োজন?"`
-            },
-            automation: {
-                id: 'automation',
-                titleBn: '⚡ API ও অটোমেশন বিশেষজ্ঞ',
-                titleEn: '⚡ API & Automation Specialists',
-                text: `[শুরু]
-"আসসালামু আলাইকুম ভাইয়া, ই-কমার্স ও কুরিয়ার অটোমেশন নিয়ে আপনার কাজের প্রশংসা করি। ২ মিনিট কথা বলার সময় হবে কি?"
-
-[অফার]
-"আমাদের ড্রপশিপার ট্র্যাকিং সিস্টেমে রিয়েল-টাইম লিড, অর্ডার ও অটোমেশন ইন্টিগ্রেশন রয়েছে। আপনি আপনার ক্লায়েন্টদের ড্রপশিপিং ওয়ার্কফ্লো সুপারফাস্ট করতে আমাদের সাথে ইন্টিগ্রেট করে কাজ করতে পারেন।"
-
-[ক্লোজিং]
-"এ বিষয়ে কি আমরা বিস্তারিত আলোচনা করতে পারি?"`
-            },
-            consultant: {
-                id: 'consultant',
-                titleBn: '📈 ই-কমার্স পরামর্শক / গ্রোথ কনসালট্যান্ট',
-                titleEn: '📈 Growth Consultants & Mentors',
-                text: `[শুরু]
-"আসসালামু আলাইকুম ভাইয়া, আপনার বিজনেস পরামর্শ ও গাইডলাইন নিয়মিত ফলো করি। আশা করি ভালো আছেন।"
-
-[মূল কথা]
-"নতুন ও রানিং ড্রপশিপারদের স্কেলিংয়ে সবচেয়ে বড় বাধা সঠিক ট্র্যাকিং ও সাপ্লায়ারের অভাব। আমাদের টুল ড্রপশিপারদের প্রতিদিনের লিড, ফলো-আপ ও পারফরম্যান্স নিখুঁতভাবে ট্র্যাক করে।"
-
-[অফার]
-"আপনার ক্লায়েন্ট ও শিক্ষার্থীদের সফল করতে আমাদের ট্র্যাকার সমাধান তাদের অপারেশনে যুক্ত করতে পারেন।"
-
-[ক্লোজিং]
-"কখন আপনার ফ্রি সময় হবে একটু কথা বলার জন্য?"`
-            },
-            general: {
-                id: 'general',
-                titleBn: '📦 সাধারণ ড্রপশিপার / জেনারেল পিচ',
-                titleEn: '📦 General Dropshipper Pitch',
-                text: `[শুরু - সালাম ও পরিচয়]
-"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি। কেমন চলছে আপনার অনলাইন ব্যবসা?"
-
-[ফলো-আপ ও বর্তমান অবস্থা]
-"আপনার ফেসবুক পেজে যে প্রোডাক্টগুলো প্রমোট করছেন, সেগুলো কি নিজের স্টক থেকে দিচ্ছেন নাকি ড্রপশিপিং করছেন?"
-
-[আমাদের সার্ভিস]
-"আমরা ড্রপশিপার ও সাপ্লায়ারদের জন্য একটি রিয়েল-টাইম ট্র্যাকিং প্ল্যাটফর্ম পরিচালনা করি। যেখানে আপনি প্রতিদিনের লিড, কাস্টমার ফলো-আপ এবং ভেরিফায়েড সাপ্লায়ারদের তথ্য এক জায়গায় পেয়ে যাবেন।"
-
-[আগ্রহ যাচাই]
-"আপনি কি বর্তমানে নতুন উইনিং প্রোডাক্ট সোর্সিং অথবা প্রফেশনাল ড্রপশিপিং নেটওয়ার্কে যুক্ত হতে আগ্রহী?"`
-            }
-        };
-
+        // ─── Tag-Based Cold Call Teleprompter Engine ───────────────────────
         let prompterScrollInterval = null;
         let isPrompterPlaying = false;
         let isPrompterHovered = false;
         let prompterSpeed = Number(localStorage.getItem(STORAGE_KEYS.prompterSpeed)) || 1.0;
-        let prompterFontSize = Number(localStorage.getItem(STORAGE_KEYS.prompterFontSize)) || 15;
-        let currentScriptId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+        let prompterFontSize = Number(localStorage.getItem(STORAGE_KEYS.prompterFontSize)) || 16;
+        let currentScriptTagId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 't_kitchen_items';
         let isEditingScript = false;
 
-        function getCustomScripts() {
+        function getTagScripts() {
             try {
-                const raw = localStorage.getItem(STORAGE_KEYS.customScripts);
+                const raw = localStorage.getItem(STORAGE_KEYS.tagScripts);
                 if (raw) return JSON.parse(raw);
             } catch (e) {}
             return {};
         }
 
-        function saveCustomScriptsData(data) {
+        function saveTagScriptsData(data) {
             try {
-                localStorage.setItem(STORAGE_KEYS.customScripts, JSON.stringify(data));
+                localStorage.setItem(STORAGE_KEYS.tagScripts, JSON.stringify(data));
                 syncSettingsToCloud();
             } catch (e) {}
         }
 
-        function getMergedScripts() {
-            const custom = getCustomScripts();
-            const merged = { ...DEFAULT_CALL_SCRIPTS };
-            Object.entries(custom).forEach(([k, v]) => {
-                if (merged[k]) {
-                    merged[k] = { ...merged[k], ...v };
-                } else {
-                    merged[k] = v;
-                }
-            });
-            return merged;
+        function getDefaultScriptForTag(tag) {
+            const tagName = tag ? tag.name : 'প্রোডাক্ট';
+            if (tagName.includes('কিচেন') || tagName.toLowerCase().includes('kitchen')) {
+                return `[১. শুরু - সালাম ও কুশল বিনিময়]
+"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি। কিচেন আইটেম প্রোডাক্ট নিয়ে কি ২ মিনিট কথা বলা সম্ভব?"
+
+[২. হুক ও অফার - কিচেন আইটেম]
+"আপনার পেজে দেখলাম কিচেন গ্যাজেট ও হোম প্রডাক্ট নিয়ে দারুণ কাজ করছেন। আমরা বর্তমানে হাই-কোয়ালিটি ও ট্রেন্ডিং কিচেন আইটেমের ভেরিফায়েড ড্রপশিপিং স্টক সরবরাহ করছি—যাতে আপনার নিজস্ব কোনো ইনভেন্টরি বা ডেলিভারির ঝামেলা না থাকে।"
+
+[৩. ডেলিভারি ও প্রফিট নিশ্চয়তা]
+"আমাদের প্রতিটি কিচেন প্রোডাক্টের ডেলিভারি রেশিও ৯০%+ এবং দ্রুত ক্যাশ অন ডেলিভারি সেটেলমেন্ট সুবিধা রয়েছে। ফলে রিটার্ন নিয়ে টেনশন থাকবে না।"
+
+[৪. পরবর্তী পদক্ষেপ]
+"আপনার পেজে কি নতুন উইনিং কিচেন প্রোডাক্ট যুক্ত করে সেল বাড়াতে আগ্রহী? তাহলে আমি আমাদের ড্রপশিপিং ক্যাটালগটি আপনার হোয়াটসঅ্যাপে পাঠিয়ে দিচ্ছি।"`;
+            }
+
+            return `[১. শুরু - সালাম ও পরিচয়]
+"আসসালামু আলাইকুম ভাইয়া, আশা করি ভালো আছেন। আমি Dropshipper Tracker Pro থেকে কল করেছি।"
+
+[২. হুক ও অফার - ${tagName}]
+"আপনার পেজে ${tagName} সম্পর্কিত প্রোডাক্টগুলো দেখলাম। আমাদের প্ল্যাটফর্মে বর্তমানে ${tagName} ক্যাটাগরির ভেরিফায়েড ড্রপশিপিং ও নির্ভরযোগ্য সাপ্লাইয়ার সাপোর্ট রয়েছে।"
+
+[৩. সুবিধা]
+"স্টক আউট হওয়ার ভয় নেই, ভেরিফায়েড সাপ্লায়ার থেকে সরাসরি দ্রুত কুরিয়ার ডেলিভারি হবে।"
+
+[৪. পরবর্তী পদক্ষেপ]
+"আপনি কি ${tagName} এর নতুন উইনিং প্রোডাক্ট নিয়ে ডিরেক্ট ড্রপশিপিং করতে আগ্রহী?"`;
+        }
+
+        function getScriptForTag(tagId) {
+            const scripts = getTagScripts();
+            if (scripts[tagId] && scripts[tagId].trim()) {
+                return scripts[tagId];
+            }
+            const tag = tags.find(t => t.id === tagId);
+            return getDefaultScriptForTag(tag);
         }
 
         function populatePrompterScriptSelect() {
             const select = document.getElementById('prompterScriptSelect');
             if (!select) return;
-            const scripts = getMergedScripts();
-            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
-            
-            select.innerHTML = Object.entries(scripts).map(([k, s]) => {
-                const title = currentLang === 'bn' ? (s.titleBn || s.titleEn) : (s.titleEn || s.titleBn);
-                const isDef = k === defaultId ? ' ★' : '';
-                return `<option value="${k}" ${k === currentScriptId ? 'selected' : ''}>${title}${isDef}</option>`;
+            const realTags = tags.filter(t => !String(t.id).startsWith('sys_'));
+            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || (realTags[0] ? realTags[0].id : 't_kitchen_items');
+
+            if (!realTags.some(t => t.id === currentScriptTagId)) {
+                currentScriptTagId = defaultId;
+            }
+
+            select.innerHTML = realTags.map(t => {
+                const isDef = t.id === defaultId ? ' ★' : '';
+                return `<option value="${t.id}" ${t.id === currentScriptTagId ? 'selected' : ''}>🏷️ ${t.name}${isDef}</option>`;
             }).join('');
 
             updateDefaultScriptStar();
         }
 
         function updateDefaultScriptStar() {
-            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+            const defaultId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 't_kitchen_items';
             const star = document.getElementById('defaultScriptStar');
             if (star) {
-                if (currentScriptId === defaultId) {
+                if (currentScriptTagId === defaultId) {
                     star.className = 'fa-solid fa-star text-amber-500';
                 } else {
                     star.className = 'fa-regular fa-star text-slate-400';
@@ -1754,50 +1807,57 @@
         }
 
         function setAsDefaultScript() {
-            localStorage.setItem(STORAGE_KEYS.defaultScriptId, currentScriptId);
+            localStorage.setItem(STORAGE_KEYS.defaultScriptId, currentScriptTagId);
             populatePrompterScriptSelect();
             updateDefaultScriptStar();
             syncSettingsToCloud();
-            alert(currentLang === 'bn' ? "ডিফল্ট স্ক্রিপ্ট হিসেবে সেট করা হয়েছে!" : "Set as default script!");
+            playUiSound('success');
+            alert(currentLang === 'bn' ? "ডিফল্ট ট্যাগ স্ক্রিপ্ট হিসেবে সেট করা হয়েছে!" : "Set as default tag script!");
         }
 
         function renderPrompterScript() {
-            const scripts = getMergedScripts();
-            const s = scripts[currentScriptId] || scripts.perf_marketer || Object.values(scripts)[0];
+            const text = getScriptForTag(currentScriptTagId);
             const textEl = document.getElementById('prompterScriptText');
             const textarea = document.getElementById('prompterEditTextarea');
             if (textEl) {
-                textEl.innerText = s ? s.text : '';
+                textEl.innerText = text;
                 textEl.style.fontSize = `${prompterFontSize}px`;
             }
             if (textarea) {
-                textarea.value = s ? s.text : '';
+                textarea.value = text;
             }
         }
 
-        function onSelectPrompterScript(id) {
-            currentScriptId = id;
+        function onSelectPrompterScript(tagId) {
+            currentScriptTagId = tagId;
             if (isEditingScript) toggleScriptEdit(false);
             renderPrompterScript();
             updateDefaultScriptStar();
             rewindPrompter();
+            playUiSound('click');
         }
 
-        function togglePrompter(show) {
+        function togglePrompter(show, targetTagId = null) {
             const drawer = document.getElementById('prompterDrawer');
             if (!drawer) return;
             if (show) {
+                playUiSound('click');
                 drawer.classList.remove('translate-x-full');
+                if (targetTagId && tags.some(t => t.id === targetTagId)) {
+                    currentScriptTagId = targetTagId;
+                }
                 populatePrompterScriptSelect();
                 renderPrompterScript();
                 setupPrompterListeners();
             } else {
+                playUiSound('click');
                 drawer.classList.add('translate-x-full');
                 pausePrompterAutoScroll();
             }
         }
 
         function toggleScriptEdit(forceState) {
+            playUiSound('click');
             isEditingScript = typeof forceState === 'boolean' ? forceState : !isEditingScript;
             const textEl = document.getElementById('prompterScriptText');
             const editorEl = document.getElementById('prompterScriptEditor');
@@ -1817,32 +1877,27 @@
         function saveCustomScript() {
             const textarea = document.getElementById('prompterEditTextarea');
             if (!textarea) return;
-            const custom = getCustomScripts();
-            const scripts = getMergedScripts();
-            const cur = scripts[currentScriptId] || {};
-            custom[currentScriptId] = {
-                id: currentScriptId,
-                titleBn: cur.titleBn || 'কাস্টম স্ক্রিপ্ট',
-                titleEn: cur.titleEn || 'Custom Script',
-                text: textarea.value
-            };
-            saveCustomScriptsData(custom);
+            const tagScripts = getTagScripts();
+            tagScripts[currentScriptTagId] = textarea.value.trim();
+            saveTagScriptsData(tagScripts);
             renderPrompterScript();
             toggleScriptEdit(false);
-            alert(currentLang === 'bn' ? "স্ক্রিপ্ট সফলভাবে সংরক্ষিত হয়েছে!" : "Script saved successfully!");
+            playUiSound('success');
+            alert(currentLang === 'bn' ? "ট্যাগের স্ক্রিপ্ট সফলভাবে সংরক্ষিত হয়েছে!" : "Tag script saved successfully!");
         }
 
         function startPrompterAutoScroll() {
             stopPrompterAutoScroll();
             isPrompterPlaying = true;
             updatePrompterPlayStateUI();
+            playUiSound('action');
 
             const container = document.getElementById('prompterScrollContainer');
             if (!container) return;
 
             prompterScrollInterval = setInterval(() => {
                 if (!isPrompterPlaying || isPrompterHovered) return;
-                const step = prompterSpeed * 0.9;
+                const step = prompterSpeed * 0.95;
                 container.scrollTop += step;
 
                 if (container.scrollTop + container.clientHeight >= container.scrollHeight - 4) {
@@ -1867,12 +1922,14 @@
         function togglePrompterPlay() {
             if (isPrompterPlaying) {
                 pausePrompterAutoScroll();
+                playUiSound('click');
             } else {
                 startPrompterAutoScroll();
             }
         }
 
         function rewindPrompter() {
+            playUiSound('click');
             const container = document.getElementById('prompterScrollContainer');
             if (container) {
                 container.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1907,10 +1964,12 @@
         function setPrompterSpeed(speed) {
             prompterSpeed = speed;
             localStorage.setItem(STORAGE_KEYS.prompterSpeed, speed);
+            playUiSound('click');
         }
 
         function changePrompterFontSize(delta) {
-            prompterFontSize = Math.min(24, Math.max(12, prompterFontSize + delta * 2));
+            playUiSound('click');
+            prompterFontSize = Math.min(26, Math.max(12, prompterFontSize + delta * 2));
             localStorage.setItem(STORAGE_KEYS.prompterFontSize, prompterFontSize);
             const textEl = document.getElementById('prompterScriptText');
             if (textEl) textEl.style.fontSize = `${prompterFontSize}px`;
@@ -1944,7 +2003,6 @@
                 }, { passive: true });
             }
 
-            // Keyboard shortcut (Escape closes prompter)
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     const drawer = document.getElementById('prompterDrawer');
@@ -1954,6 +2012,7 @@
                 }
             });
         }
+
 
         // ─── Called Leads State (persisted + synced) ───────────────────────
         let calledLeadIds = new Set();
@@ -1973,6 +2032,7 @@
         }
 
         function triggerCall(leadId, phone) {
+            playUiSound('call');
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
             else if (!cleaned.startsWith('880')) cleaned = '880' + cleaned;
@@ -1998,14 +2058,14 @@
                 const dailyActivities = getDailyActivities();
                 const calledArr = [...calledLeadIds];
                 const followups = getLeadFollowups();
-                const customScripts = getCustomScripts();
-                const defaultScriptId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 'perf_marketer';
+                const tagScripts = getTagScripts();
+                const defaultScriptId = localStorage.getItem(STORAGE_KEYS.defaultScriptId) || 't_kitchen_items';
                 const payload = JSON.stringify({
                     targetSettings,
                     dailyActivities,
                     calledLeadIds: calledArr,
                     leadFollowups: followups,
-                    customScripts,
+                    tagScripts,
                     defaultScriptId,
                     updatedAt: new Date().toISOString()
                 });
@@ -2025,7 +2085,7 @@
                     backupData.dailyActivities = dailyActivities;
                     backupData.calledLeadIds = calledArr;
                     backupData.leadFollowups = followups;
-                    backupData.customScripts = customScripts;
+                    backupData.tagScripts = tagScripts;
                     backupData.defaultScriptId = defaultScriptId;
                     backupData.lastSync = new Date().toISOString();
                     apiBackupCloudPut(backupData).catch(() => {});
@@ -2396,8 +2456,8 @@
                                 leadFollowups = { ...leadFollowups, ...parsed.leadFollowups };
                                 saveLeadFollowups();
                             }
-                            if (parsed.customScripts && typeof parsed.customScripts === 'object') {
-                                localStorage.setItem(STORAGE_KEYS.customScripts, JSON.stringify(parsed.customScripts));
+                            if (parsed.tagScripts && typeof parsed.tagScripts === 'object') {
+                                localStorage.setItem(STORAGE_KEYS.tagScripts, JSON.stringify(parsed.tagScripts));
                             }
                             if (parsed.defaultScriptId) {
                                 localStorage.setItem(STORAGE_KEYS.defaultScriptId, parsed.defaultScriptId);
@@ -2526,6 +2586,7 @@
             renderLeads();
             updateChart();
             updateTargetProgress();
+            playUiSound('success');
 
             // 7. Push unified snapshot to Backup Cloud (ExtendsClass)
             if (supaSuccess || backupSuccess || unsyncedLeads.length > 0) {
@@ -2563,12 +2624,16 @@
             leads = local.leads;
             calledLeadIds = getCalledLeadIds();
             leadFollowups = getLeadFollowups();
-            ensureTargetAudienceTags();
+            migrateToKitchenItemsTag();
             applyViewModeUI();
+            updateSoundUI();
+            const roleEl = document.getElementById('roleInput');
+            if (roleEl) roleEl.value = defaultRole;
             renderTags();
             renderLeads();
             updateChart();
             updateTargetProgress();
+            playUiSound('success');
             updateSyncStatusUI();
 
             // 2. Perform seamless background Dual-Cloud sync
@@ -2768,6 +2833,7 @@
         }
 
         async function triggerWhatsApp(leadId, phone, currentStatus) {
+            playUiSound('action');
             recordContactActivity(leadId);
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) cleaned = '88' + cleaned;
@@ -2797,6 +2863,7 @@
         }
 
         async function changeStatus(leadId, newStatus) {
+            playUiSound('action');
             const target = leads.find(l => l.id === leadId);
             if (!target) return;
             target.status = newStatus;
@@ -2807,6 +2874,7 @@
             renderLeads();
             updateChart();
             updateTargetProgress();
+            playUiSound('success');
             closeAllStatusDropdowns();
 
             apiSupabase(`leads?id=eq.${leadId}`, 'PATCH', { status: newStatus }).catch(e => console.warn("Supabase status update error:", e));
@@ -2870,9 +2938,12 @@
                 if (!confirmAdd) return;
             }
 
+            const roleSelectEl = document.getElementById('roleInput');
+            const selectedRole = roleSelectEl ? roleSelectEl.value : defaultRole;
+
             const newLead = {
                 id: Date.now(),
-                role: 'D',
+                role: selectedRole || 'D',
                 phone: phone,
                 page: page,
                 tagId: tagId,
@@ -2888,6 +2959,7 @@
             renderLeads();
             updateChart();
             updateTargetProgress();
+            playUiSound('success');
 
             document.getElementById('phoneInput').value = '';
             document.getElementById('pageInput').value = '';
@@ -2930,6 +3002,7 @@
             const confirmMsg = currentLang === 'bn' ? "আপনি কি নিশ্চিত এই লিডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this lead?";
             if (confirm(confirmMsg)) {
                 leads = leads.filter(l => l.id !== id);
+                playUiSound('delete');
                 saveLocalData();
                 renderLeads();
                 updateChart();
@@ -3014,6 +3087,7 @@
             renderLeads();
             updateChart();
             updateTargetProgress();
+            playUiSound('success');
             closeEditModal();
             syncSettingsToCloud();
 
@@ -3056,6 +3130,81 @@
             document.getElementById('newTagName').value = '';
 
             apiSupabase('tags', 'POST', [newTag]).catch(e => console.warn("Supabase tag add notice:", e));
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads,
+                tags
+            });
+        }
+
+        // ─── Kitchen Items Migration & Tag Editing ────────────────────────
+        function migrateToKitchenItemsTag() {
+            const MIGRATION_KEY = 'dropshipper_migrated_kitchen_v3';
+            if (localStorage.getItem(MIGRATION_KEY)) return;
+
+            console.log("Migrating all leads to 'কিচেন আইটেম' and cleaning old tags...");
+            const kitchenTagId = 't_kitchen_items';
+            const kitchenTag = { id: kitchenTagId, name: 'কিচেন আইটেম' };
+
+            const oldTags = [...tags];
+            // Set tags to only kitchen item tag (or preserve if kitchen already exists)
+            tags = [kitchenTag];
+
+            // Migrate all collected leads to kitchen items tag
+            leads = leads.map(l => ({
+                ...l,
+                tagId: kitchenTagId
+            }));
+
+            lastSelectedTagId = kitchenTagId;
+            localStorage.setItem(STORAGE_KEYS.lastTag, kitchenTagId);
+            saveLocalData();
+
+            // Push kitchen tag to Supabase & clean old tags
+            apiSupabase('tags', 'POST', [kitchenTag]).catch(() => {});
+            oldTags.forEach(ot => {
+                if (ot.id !== kitchenTagId && !String(ot.id).startsWith('sys_')) {
+                    apiSupabase(`tags?id=eq.${ot.id}`, 'DELETE').catch(() => {});
+                }
+            });
+
+            // Update leads in Supabase
+            leads.forEach(l => {
+                apiSupabase(`leads?id=eq.${l.id}`, 'PATCH', { tag_id: kitchenTagId }).catch(() => {});
+            });
+
+            // Push to Backup Cloud
+            apiBackupCloudPut({
+                appName: "Dropshipper Tracker Pro",
+                lastSync: new Date().toISOString(),
+                leads: leads,
+                tags: tags,
+                targetSettings: getTargetSettings(),
+                dailyActivities: getDailyActivities(),
+                calledLeadIds: [...calledLeadIds],
+                leadFollowups: getLeadFollowups()
+            }).catch(() => {});
+
+            localStorage.setItem(MIGRATION_KEY, 'true');
+            console.log("Migration to 'কিচেন আইটেম' tag complete!");
+        }
+
+        async function editTag(tagId) {
+            const tag = tags.find(t => t.id === tagId);
+            if (!tag) return;
+            const promptMsg = currentLang === 'bn' ? "ট্যাগের নতুন নাম লিখুন:" : "Enter new name for tag:";
+            const newName = prompt(promptMsg, tag.name);
+            if (!newName || !newName.trim() || newName.trim() === tag.name) return;
+
+            tag.name = newName.trim();
+            saveLocalData();
+            renderTags();
+            renderLeads();
+            populatePrompterScriptSelect();
+            playUiSound('success');
+
+            apiSupabase(`tags?id=eq.${tagId}`, 'PATCH', { name: tag.name }).catch(e => console.warn("Supabase tag edit notice:", e));
             apiBackupCloudPut({
                 appName: "Dropshipper Tracker Pro",
                 lastSync: new Date().toISOString(),
@@ -3108,11 +3257,18 @@
             listEl.innerHTML = realTags.map(t => {
                 const colorClass = getTagColor(t.id);
                 return `
-                    <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border dark:border-slate-600 text-xs">
-                        <span class="font-medium text-slate-700 dark:text-slate-200">
-                            <i class="fa-solid fa-tag ${colorClass} mr-1.5"></i>${t.name}
+                    <div class="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg border dark:border-slate-600 text-xs hover:border-indigo-300 dark:hover:border-indigo-700 transition">
+                        <span class="font-medium text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-tag ${colorClass}"></i> <span>${t.name}</span>
                         </span>
-                        <button onclick="deleteTag('${t.id}')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="editTag('${t.id}')" class="text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-400 p-1 rounded hover:bg-indigo-50 dark:hover:bg-slate-700 transition" title="ট্যাগ নাম পরিবর্তন">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="deleteTag('${t.id}')" class="text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 p-1 rounded hover:bg-rose-50 dark:hover:bg-slate-700 transition" title="ট্যাগ ডিলিট">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -3289,13 +3445,19 @@
                     const fTag = FOLLOWUP_TAGS[followup.quickTag];
 
                     return `
-                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition border-b border-slate-100 dark:border-slate-700/80">
+                        <tr class="transition border-b ${
+    l.role === 'S' 
+    ? 'bg-purple-50/60 hover:bg-purple-100/70 dark:bg-purple-950/25 dark:hover:bg-purple-900/40 border-l-4 border-l-purple-600 dark:border-l-purple-500 border-slate-200/80 dark:border-purple-900/50' 
+    : 'hover:bg-slate-50/80 dark:hover:bg-slate-700/50 border-l-4 border-l-indigo-500 dark:border-l-indigo-600 border-slate-100 dark:border-slate-700/80'
+}">
                             <!-- Role -->
                             <td class="p-3 text-center">
                                 <button onclick="toggleRole(${l.id})" 
-                                        class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center mx-auto ${
-                                            l.role === 'D' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700' : 'bg-purple-800 text-white border-purple-900'
-                                        }">
+                                        class="w-7 h-7 rounded-full font-bold text-[11px] shadow-sm transition border flex items-center justify-center mx-auto active:scale-95 ${
+                                            l.role === 'S' 
+                                            ? 'bg-purple-700 text-white border-purple-800 shadow-purple-500/25 ring-2 ring-purple-400/30' 
+                                            : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700'
+                                        }" title="${l.role === 'S' ? 'Supplier (সাপ্লায়ার)' : 'Dropshipper (ড্রপশিপার)'}">
                                     ${l.role}
                                 </button>
                             </td>
@@ -3451,7 +3613,11 @@
                     const fTag = FOLLOWUP_TAGS[followup.quickTag];
 
                     return `
-                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3 flex flex-col justify-between hover:shadow-md transition">
+                        <div class="rounded-2xl p-4 shadow-sm space-y-3 flex flex-col justify-between hover:shadow-md transition border ${
+    l.role === 'S' 
+    ? 'border-purple-300 dark:border-purple-800/80 bg-purple-50/30 dark:bg-purple-950/20 ring-1 ring-purple-300/40 dark:ring-purple-900/40 border-l-4 border-l-purple-600' 
+    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 border-l-4 border-l-indigo-500'
+}">
                             <!-- Top: Role & Phone & Actions -->
                             <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/80 pb-2.5">
                                 <div class="flex items-center gap-2">
